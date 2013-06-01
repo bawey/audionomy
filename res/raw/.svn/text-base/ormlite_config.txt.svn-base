@@ -1,0 +1,148 @@
+#
+# generated on 2013/03/27 01:41:43
+#
+# --table-start--
+dataClass=com.example.baweyplayer.db.DbDownload
+tableName=dbdownload
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=downloadId
+columnName=downloadId
+# --field-end--
+# --field-start--
+fieldName=recording
+columnName=recording_mbid
+foreign=true
+indexName=dbdownload_recording_mbid_idx
+foreignColumnName=mbid
+# --field-end--
+# --field-start--
+fieldName=filePath
+columnName=filePath
+# --field-end--
+# --field-start--
+fieldName=isFinihed
+columnName=isFinihed
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=com.example.baweyplayer.db.DbArtist
+tableName=dbartist
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=mbid
+columnName=mbid
+indexName=dbartist_mbid_idx
+# --field-end--
+# --field-start--
+fieldName=name
+columnName=name
+indexName=dbartist_name_idx
+# --field-end--
+# --field-start--
+fieldName=country
+columnName=country
+# --field-end--
+# --field-start--
+fieldName=imagePath
+columnName=imagePath
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=com.example.baweyplayer.db.DbRelease
+tableName=dbrelease
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=groupMbid
+columnName=groupMbid
+unique=true
+indexName=dbrelease_groupMbid_idx
+# --field-end--
+# --field-start--
+fieldName=individualMbid
+columnName=individualMbid
+unique=true
+indexName=dbrelease_individualMbid_idx
+# --field-end--
+# --field-start--
+fieldName=title
+columnName=title
+indexName=dbrelease_title_idx
+# --field-end--
+# --field-start--
+fieldName=artist
+columnName=artist
+foreign=true
+indexName=dbrelease_artist_idx
+foreignColumnName=mbid
+# --field-end--
+# --field-start--
+fieldName=releaseYear
+columnName=releaseYear
+# --field-end--
+# --field-start--
+fieldName=imagePath
+columnName=imagePath
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################
+# --table-start--
+dataClass=com.example.baweyplayer.db.DbRecording
+tableName=dbrecording
+# --table-fields-start--
+# --field-start--
+fieldName=id
+generatedId=true
+# --field-end--
+# --field-start--
+fieldName=mbid
+columnName=mbid
+indexName=dbrecording_mbid_idx
+# --field-end--
+# --field-start--
+fieldName=title
+columnName=title
+indexName=dbrecording_title_idx
+# --field-end--
+# --field-start--
+fieldName=artist
+columnName=artist
+foreign=true
+indexName=dbrecording_artist_idx
+foreignColumnName=mbid
+# --field-end--
+# --field-start--
+fieldName=duration
+columnName=duration
+# --field-end--
+# --field-start--
+fieldName=release
+columnName=release
+foreign=true
+indexName=dbrecording_release_idx
+foreignColumnName=groupMbid
+# --field-end--
+# --field-start--
+fieldName=trackNumber
+columnName=track_number
+# --field-end--
+# --table-fields-end--
+# --table-end--
+#################################

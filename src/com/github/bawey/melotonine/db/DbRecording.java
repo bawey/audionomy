@@ -1,0 +1,143 @@
+package com.github.bawey.melotonine.db;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.musicbrainz.android.api.data.Recording;
+import org.musicbrainz.android.api.data.RecordingInfo;
+
+import com.j256.ormlite.field.DatabaseField;
+
+public class DbRecording {
+
+	public static final String COL_NAME_MBID = "mbid";
+	public static final String COL_NAME_TITLE = "title";
+	public static final String COL_NAME_ARTIST = "artist";
+	public static final String COL_NAME_DURATION = "duration";
+	public static final String COL_NAME_RELEASE = "release";
+	public static final String COL_NAME_TRACK_NO = "track_number";
+
+	@DatabaseField(generatedId = true)
+	int id;
+
+	@DatabaseField(index = true, columnName = COL_NAME_MBID)
+	String mbid;
+
+	@DatabaseField(index = true, columnName = COL_NAME_TITLE)
+	String title;
+
+	@DatabaseField(index = true, foreign = true, foreignColumnName = DbArtist.COL_NAME_MBID, columnName = COL_NAME_ARTIST)
+	DbArtist artist;
+
+	@DatabaseField(columnName = COL_NAME_DURATION)
+	int duration;
+
+	@DatabaseField(index = true, foreign = true, foreignColumnName = DbRelease.COL_NAME_RELEASE_GROUP_MBID, columnName = COL_NAME_RELEASE)
+	DbRelease release;
+
+	@DatabaseField(columnName = COL_NAME_TRACK_NO)
+	int trackNumber;
+
+	public DbRecording() {
+	}
+
+	// may not be needed
+	public DbRecording(Recording rec) {
+		mbid = rec.getMbid();
+		title = rec.getTitle();
+		duration = Math.round(rec.getLength() / 1000f);
+	}
+
+	public DbRecording(RecordingInfo recInfo) {
+		mbid = recInfo.getMbid();
+		title = recInfo.getTitle();
+		duration = Math.round(recInfo.getLength() / 1000f);
+	}
+
+	/** Data manipulation methods **/
+
+	public String getMbid() {
+		return mbid;
+	}
+
+	public void setMbid(String mbid) {
+		this.mbid = mbid;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public DbArtist getArtist() {
+		return artist;
+	}
+
+	public void setArtist(DbArtist artist) {
+		this.artist = artist;
+	}
+
+	public int getDuration() {
+		return duration;
+	}
+
+	public void setDuration(int duration) {
+		this.duration = duration;
+	}
+
+	public DbRelease getRelease() {
+		return release;
+	}
+
+	public void setRelease(DbRelease release) {
+		this.release = release;
+	}
+
+	public int getTrackNumber() {
+		return trackNumber;
+	}
+
+	public void setTrackNumber(int trackNumber) {
+		this.trackNumber = trackNumber;
+	}
+
+	public void setTrackNumber(String number) {
+		if (number != null) {
+			for (int digits = 2; digits > 0; --digits) {
+				Pattern trackPattern = Pattern.compile("(\\d{" + digits + "})");
+				Matcher trackMatcher = trackPattern.matcher(number);
+				if (trackMatcher.find()) {
+					this.trackNumber = Integer.parseInt(trackMatcher.group());
+					return;
+				}
+			}
+		}
+	}
+
+	@Override
+	public String toString() {
+		return "DbRecording [mbid=" + mbid + ", title=" + title + ", artist=" + artist + ", duration=" + duration + ", release=" + release + "]";
+	}
+
+	public String getArtworkPath() {
+		if (this.release != null && this.release.getImagePath() != null && this.release.getImagePath().length() > 0) {
+			return this.release.getImagePath();
+		} else {
+			if (this.artist != null && this.artist.getImagePath() != null && this.artist.getImagePath().length() > 0) {
+				return this.artist.getImagePath();
+			}
+		}
+		return null;
+	}
+
+	public String getReleaseTitle() {
+		if (this.release != null) {
+			return this.release.getTitle();
+		}
+		return null;
+	}
+
+}

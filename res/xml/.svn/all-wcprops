@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 29
+/svn/!svn/ver/4/trunk/res/xml
+END
+pref_notification.xml
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/4/trunk/res/xml/pref_notification.xml
+END
+pref_headers.xml
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/4/trunk/res/xml/pref_headers.xml
+END
+pref_general.xml
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/4/trunk/res/xml/pref_general.xml
+END
+pref_data_sync.xml
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/4/trunk/res/xml/pref_data_sync.xml
+END

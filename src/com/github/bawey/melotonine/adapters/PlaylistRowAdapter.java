@@ -1,0 +1,82 @@
+package com.github.bawey.melotonine.adapters;
+
+import android.app.Activity;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.github.bawey.melotonine.R;
+import com.github.bawey.melotonine.adapters.abstracts.AbstractLibraryRowAdapter;
+import com.github.bawey.melotonine.internals.Song;
+import com.github.bawey.melotonine.singletons.PlaybackQueue;
+
+public class PlaylistRowAdapter extends BaseAdapter {
+
+	private PlaybackQueue queue = PlaybackQueue.getInstance();
+	private Activity activity;
+
+	public PlaylistRowAdapter(Activity parent) {
+		this.activity = parent;
+	}
+
+	@Override
+	public int getCount() {
+		return queue.getPlaybackQueueList().size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		return queue.getPlaybackQueueList().get(position);
+	}
+
+	private Song getSong(int position) {
+		return (Song) getItem(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View rowView = inflater.inflate(R.layout.library_row_layout, parent, false);
+
+		ImageView imageView = (ImageView) rowView.findViewById(R.id.image);
+		if (((Song) getItem(position)).getImagePath() != null) {
+			imageView.setImageDrawable(Drawable.createFromPath(getSong(position).getImagePath()));
+		} else {
+			imageView.setVisibility(View.INVISIBLE);
+		}
+		TextView textView = (TextView) rowView.findViewById(R.id.text);
+		textView.setText(AbstractLibraryRowAdapter.songPrinter(getSong(position)));
+
+		CheckBox checkbox = (CheckBox) rowView.findViewById(R.id.checkbox);
+		checkbox.setVisibility(View.INVISIBLE);
+		ImageView fetchIcon = (ImageView) rowView.findViewById(R.id.fetching_status);
+		fetchIcon.setVisibility(View.GONE);
+		return rowView;
+	}
+
+	public OnItemClickListener getOnItemClickListener() {
+		return onItemClickListener;
+	}
+
+	private OnItemClickListener onItemClickListener = new OnItemClickListener() {
+
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+			queue.setCurrentTrackNo(arg2);
+		}
+
+	};
+}

@@ -1,0 +1,133 @@
+package com.github.bawey.melotonine.activities;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
+
+import com.github.bawey.melotonine.R;
+import com.github.bawey.melotonine.activities.abstracts.AbstractLibraryActivity;
+import com.github.bawey.melotonine.adapters.OnlineLibraryRowAdapter;
+import com.github.bawey.melotonine.singletons.PlaybackQueue;
+
+public class LibraryActivity extends AbstractLibraryActivity {
+
+	private PlaybackQueue queue = PlaybackQueue.getInstance();
+	private ListView libraryList;
+	private TextView rowsFilter;
+	private String currentQuery = "";
+	private int rowMode = OnlineLibraryRowAdapter.ROW_MODE_ARTIST;
+
+	
+	private OnEditorActionListener editorActionListener = new OnEditorActionListener() {
+
+		/** TODO: gets launched twice upon pressing enter **/
+		@Override
+		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+			Log.d(this.getClass().getName() + " onEditorAction", "actionId: " + actionId + ", event: " + event);
+			if ((actionId == EditorInfo.IME_ACTION_SEARCH || event.getKeyCode() == KeyEvent.KEYCODE_ENTER)
+					&& event.getAction() == KeyEvent.ACTION_DOWN) {
+				Log.d("yes", "will search now");
+				InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+				currentQuery = v.getText().toString();
+				Log.d(this.getClass().getName() + ":onEditorAction", "query=" + currentQuery);
+				imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+				revalidateList();
+				return true;
+			}
+			return false;
+		}
+	};
+
+
+	
+	@Override
+	public String getArtistMbid() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getReleaseGroupMbid() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.setContentView(R.layout.library_layout);
+
+		libraryList = (ListView) findViewById(R.id.libraryMatches);
+
+		/** let's wait with that **/
+
+		rowsFilter = (TextView) findViewById(R.id.filterKey);
+		rowsFilter.setOnEditorActionListener(editorActionListener);
+	}
+
+	public void onCategorySwitched(View view) {
+		this.rowMode = view.getId();
+		switch (view.getId()) {
+		case OnlineLibraryRowAdapter.ROW_MODE_SONG:
+			findViewById(R.id.button_enqueue).setVisibility(View.VISIBLE);
+			findViewById(R.id.button_fetch).setVisibility(View.VISIBLE);
+			break;
+		default:
+			findViewById(R.id.button_enqueue).setVisibility(View.GONE);
+			findViewById(R.id.button_fetch).setVisibility(View.GONE);
+		}
+		revalidateList();
+	}
+
+	@Override
+	protected String getCurrentQuery() {
+		return this.currentQuery;
+	}
+
+	@Override
+	protected int getCurrentRowMode() {
+		return this.rowMode;
+	}
+
+	@Override
+	protected ListView getLibraryListView() {
+		return this.libraryList;
+	}
+
+	// private OnItemClickListener listItemClickListener = new
+	// OnItemClickListener() {
+	//
+	// @Override
+	// public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long
+	// arg3) {
+	// String text = null;
+	// Intent intent = null;
+	// if (lra.getRecordings() != null) {
+	// text = lra.getRecordings().get(arg2).getTitle();
+	// } else if (lra.getArtists() != null) {
+	// text = lra.getArtists().get(arg2).getName();
+	// intent = new Intent(getApplicationContext(), ArtistActivity.class);
+	// intent.putExtra(ArtistActivity.ARTIST_MBID,
+	// lra.getArtists().get(arg2).getMbid());
+	// } else if (lra.getReleases() != null) {
+	// text = lra.getReleases().get(arg2).getTitle();
+	// intent = new Intent(getApplicationContext(), ReleaseActivity.class);
+	// intent.putExtra(ReleaseActivity.RELEASE_GROUP_MBID,
+	// lra.getReleases().get(arg2).getMbid());
+	// }
+	// if (intent != null) {
+	// startActivity(intent);
+	// }
+	// Toast.makeText(LibraryActivity.this, text, Toast.LENGTH_LONG).show();
+	// }
+	//
+	// };
+
+}

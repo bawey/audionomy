@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/42/trunk/res/layout
+END
+player_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/42/trunk/res/layout/player_layout.xml
+END
+library_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/38/trunk/res/layout/library_layout.xml
+END
+maintainance_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/37/trunk/res/layout/maintainance_layout.xml
+END
+login_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/13/trunk/res/layout/login_layout.xml
+END
+spinner_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/31/trunk/res/layout/spinner_layout.xml
+END
+artist_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/42/trunk/res/layout/artist_layout.xml
+END
+release_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/42/trunk/res/layout/release_layout.xml
+END
+library_row_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/35/trunk/res/layout/library_row_layout.xml
+END
+settings_layout.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/4/trunk/res/layout/settings_layout.xml
+END

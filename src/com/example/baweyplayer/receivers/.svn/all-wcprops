@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/37/trunk/src/com/example/baweyplayer/receivers
+END
+ModeChangedReceiver.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/44/trunk/src/com/example/baweyplayer/receivers/ModeChangedReceiver.java
+END
+LibrarySongFetchedReceiver.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/44/trunk/src/com/example/baweyplayer/receivers/LibrarySongFetchedReceiver.java
+END
+NewArtworkReceiver.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/44/trunk/src/com/example/baweyplayer/receivers/NewArtworkReceiver.java
+END

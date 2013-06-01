@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <!-- header -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <RadioGroup
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.85"
+            android:orientation="horizontal" >
+
+            <RadioButton
+                android:id="@+id/showArtists"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".33"
+                android:checked="true"
+                android:onClick="onCategorySwitched"
+                android:text="Artists" />
+
+            <RadioButton
+                android:id="@+id/showAlbums"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".34"
+                android:onClick="onCategorySwitched"
+                android:text="Albums" />
+
+            <RadioButton
+                android:id="@+id/showSongs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight=".33"
+                android:onClick="onCategorySwitched"
+                android:text="Songs" />
+        </RadioGroup>
+    </LinearLayout>
+    <!-- body -->
+    <!--
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight=".8" >
+    -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/button_enqueue"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="enqueue"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/button_fetch"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:visibility="gone"
+            android:text="fetch" />
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/libraryMatches"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight=".8"
+        android:orientation="horizontal" >
+    </ListView>
+    <!-- </ScrollView> -->
+    <!-- footer -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <EditText
+            android:id="@+id/filterKey"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:imeOptions="actionSearch" >
+        </EditText>
+    </LinearLayout>
+
+</LinearLayout>
