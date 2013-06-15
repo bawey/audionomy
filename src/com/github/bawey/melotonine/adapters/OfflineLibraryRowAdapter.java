@@ -140,6 +140,8 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			} else if ((dbArtist = dbRelease.getArtist()) != null) {
 				if (dbArtist.getImagePath() != null && dbArtist.getImagePath().length() > 0) {
 					imageView.setImageDrawable(Drawable.createFromPath(dbArtist.getImagePath()));
+				} else {
+					imageView.setImageResource(R.drawable.ic_album);
 				}
 			}
 			break;
@@ -147,7 +149,10 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			dbArtist = artists.get(position);
 			if (dbArtist.getImagePath() != null && dbArtist.getImagePath().length() > 0) {
 				imageView.setImageDrawable(Drawable.createFromPath(dbArtist.getImagePath()));
+			} else {
+				imageView.setImageResource(R.drawable.ic_mic);
 			}
+
 			textView.setText(artists.get(position).getName());
 			break;
 		case ROW_MODE_SONG:
@@ -163,10 +168,11 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			} else if ((dbArtist = recordings.get(position).getArtist()) != null) {
 				if (dbArtist.getImagePath() != null && dbArtist.getImagePath().length() > 0) {
 					imageView.setImageDrawable(Drawable.createFromPath(dbArtist.getImagePath()));
+				} else {
+					imageView.setImageResource(R.drawable.ic_speaker);
 				}
 			}
 		}
-
 		return rowView;
 	}
 
@@ -223,8 +229,8 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			case ROW_MODE_SONG:
 				DbRecording dbRec = recordings.get(arg2);
 				DbDownload dbDown = dbHelper.getDownloadByMbid(dbRec.getMbid());
-				PlaybackQueue.getInstance().enqueue(dbDown.getFilePath(), dbRec.getTitle(), dbRec.getArtist().getName(), dbRec.getDuration(),
-						dbRec.getReleaseTitle(), dbRec.getArtworkPath());
+				PlaybackQueue.getInstance().enqueue(dbDown.getFilePath(), dbRec.getTitle(), dbRec.getArtist().getName(),
+						dbRec.getDuration(), dbRec.getReleaseTitle(), dbRec.getArtworkPath());
 				Toast.makeText(libraryActivity, libraryActivity.getResources().getString(R.string.enqueued), Toast.LENGTH_SHORT).show();
 				break;
 			}

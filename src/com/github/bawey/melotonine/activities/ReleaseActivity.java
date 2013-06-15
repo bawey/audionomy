@@ -27,6 +27,7 @@ import com.github.bawey.melotonine.adapters.OnlineLibraryRowAdapter;
 import com.github.bawey.melotonine.db.DatabaseHelper;
 import com.github.bawey.melotonine.db.DbArtist;
 import com.github.bawey.melotonine.db.DbRelease;
+import com.github.bawey.melotonine.enums.AppMode;
 import com.github.bawey.melotonine.singletons.LocalContentManager;
 import com.github.bawey.melotonine.singletons.MusicMetaProvider;
 
@@ -69,7 +70,6 @@ public class ReleaseActivity extends AbstractLibraryActivity {
 		super.onCreate(savedInstanceState);
 		releaseGroupMbid = getIntent().getExtras().getString(RELEASE_GROUP_MBID);
 
-		this.setContentView(R.layout.release_layout);
 		try {
 			setAllUp(releaseGroupMbid);
 		} catch (Exception e) {
@@ -78,7 +78,7 @@ public class ReleaseActivity extends AbstractLibraryActivity {
 	}
 
 	public void setSpinnerUp(String mbid) throws IOException {
-		if (((Melotonine) getApplication()).isRemote()) {
+		if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 			if (releases == null) {
 				releases = mmp.searchRelease(mbid);
 				List<String> labels = new LinkedList<String>();
@@ -118,7 +118,7 @@ public class ReleaseActivity extends AbstractLibraryActivity {
 		dbRelease = DatabaseHelper.getInstance().getReleaseByGroupMbid(mbid);
 		ReleaseGroupInfo rgInfo = null;
 		if ((dbRelease == null || dbRelease.getReleaseYear() == 0 || dbRelease.getArtist() == null)
-				&& ((Melotonine) getApplication()).isRemote()) {
+				&& ((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 			List<ReleaseGroupInfo> rgInfos = mmp.searchReleaseGroup(mbid);
 			if (rgInfos.size() != 1) {
 				throw new RuntimeException("non-one-element rg list");
@@ -143,10 +143,16 @@ public class ReleaseActivity extends AbstractLibraryActivity {
 
 		if (dbRelease.getImagePath() != null && new File(dbRelease.getImagePath()).exists()) {
 			((ImageView) findViewById(R.id.release_image)).setImageDrawable(Drawable.createFromPath(dbRelease.getImagePath()));
-		} else if (((Melotonine) getApplication()).isRemote()) {
+		} else if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 			LocalContentManager.getInstance().requestCoverDownload(mbid);
 		}
 		setSpinnerUp(getReleaseGroupMbid());
 		revalidateList();
 	}
+
+	@Override
+	public int getLayoutId() {
+		return R.layout.release_layout;
+	}
+
 }

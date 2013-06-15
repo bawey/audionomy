@@ -11,6 +11,13 @@ public class VkApi extends Api {
 	}
 
 	public static synchronized VkApi getInstance() {
+		if (instance == null) {
+			synchronized (VkApi.class) {
+				if (Preferences.isInit() && Preferences.getInstance().getAccessToken() != null && instance == null) {
+					init(Preferences.getInstance().getAccessToken(), Constants.VK_API_KEY);
+				}
+			}
+		}
 		return instance;
 	}
 

@@ -32,9 +32,10 @@ import com.github.bawey.melotonine.db.DatabaseHelper;
 import com.github.bawey.melotonine.db.DbArtist;
 import com.github.bawey.melotonine.db.DbRecording;
 import com.github.bawey.melotonine.db.DbRelease;
+import com.github.bawey.melotonine.enums.AppMode;
 import com.github.bawey.melotonine.internals.Song;
 import com.github.bawey.melotonine.receivers.LibrarySongFetchedReceiver;
-import com.github.bawey.melotonine.receivers.ModeChangedReceiver;
+import com.github.bawey.melotonine.receivers.AppModeChangeReceiver;
 import com.github.bawey.melotonine.receivers.NewArtworkReceiver;
 import com.github.bawey.melotonine.singletons.LocalContentManager;
 import com.github.bawey.melotonine.singletons.PlaybackQueue;
@@ -43,7 +44,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 
 	protected AbstractLibraryRowAdapter lra;
 	private LibrarySongFetchedReceiver libraryReceiver;
-	
+
 	private NewArtworkReceiver newArtworkReceiver;
 	private boolean buttonListenersAttached = false;
 	private Boolean modeOnExit;
@@ -59,7 +60,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 				}
 				Log.d("Essential", "starting to create adapter");
 
-				boolean online = ((Melotonine) getApplication()).isRemote();
+				boolean online = ((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE;
 				if (online) {
 					lra = new OnlineLibraryRowAdapter(AbstractLibraryActivity.this, AbstractLibraryActivity.this.getCurrentRowMode(),
 							AbstractLibraryActivity.this.getCurrentQuery());
@@ -104,7 +105,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 		super.onPause();
 		this.unregisterReceiver(libraryReceiver);
 		this.unregisterReceiver(newArtworkReceiver);
-		this.modeOnExit = ((Melotonine) getApplication()).isRemote();
+		this.modeOnExit = ((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE;
 	}
 
 	@Override
@@ -115,7 +116,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 		newArtworkReceiver = new NewArtworkReceiver(this);
 		this.registerReceiver(newArtworkReceiver, new IntentFilter(Melotonine.NEW_ARTWORK_AVAILABLE));
 
-		if (modeOnExit != null && !modeOnExit.equals(((Melotonine) getApplication()).isRemote())) {
+		if (modeOnExit != null && !modeOnExit.equals(((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE)) {
 			handleModeSwitch();
 		}
 
@@ -134,7 +135,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 	}
 
 	public void handleSongFetched() {
-		if (((Melotonine) getApplication()).isRemote()) {
+		if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 			getLibraryRowAdapter().notifyDataSetChanged();
 		} else {
 			revalidateList();
@@ -160,7 +161,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 	private void hideFilterInOffline() {
 		View view = findViewById(R.id.filterKey);
 		if (view != null) {
-			view.setVisibility(((Melotonine) getApplication()).isRemote() ? View.VISIBLE : View.GONE);
+			view.setVisibility(((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE ? View.VISIBLE : View.GONE);
 		}
 	}
 
@@ -203,7 +204,7 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 		Button fetch = (Button) findViewById(R.id.button_fetch);
 		final Resources r = getResources();
 		if (enqueue != null && fetch != null) {
-			if (((Melotonine) getApplication()).isRemote()) {
+			if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 
 				fetch.setText("fetch");
 				fetch.setOnClickListener(new OnClickListener() {
@@ -307,4 +308,5 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 			buttonListenersAttached = true;
 		}
 	}
+
 }

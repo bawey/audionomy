@@ -10,18 +10,22 @@ import android.widget.Toast;
 import com.github.bawey.melotonine.R;
 import com.github.bawey.melotonine.activities.abstracts.AbstractFullscreenActivity;
 import com.github.bawey.melotonine.singletons.LocalContentManager;
-import com.github.bawey.melotonine.singletons.Settings;
+import com.github.bawey.melotonine.singletons.Preferences;
 
-public class MaintainanceActivity extends AbstractFullscreenActivity {
+public class MaintenanceActivity extends AbstractFullscreenActivity {
 
-	private Settings settings;
+	private Preferences settings;
 	private Resources r;
+
+	@Override
+	public int getLayoutId() {
+		return R.layout.maintainance_layout;
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.maintainance_layout);
-		settings = Settings.getInstance();
+		settings = Preferences.getInstance();
 		r = getResources();
 	}
 

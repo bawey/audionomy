@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -26,7 +27,9 @@ import com.github.bawey.melotonine.singletons.PlaybackQueue;
 public class PlayerActivity extends AbstractFullscreenActivity {
 
 	public static enum PlaybackMode {
-		DEFAULT(0, R.drawable.ic_menu_forward), REPEAT_ALL(1, R.drawable.ic_menu_revert), REPEAT_ONE(2, R.drawable.ic_menu_refresh);
+		DEFAULT(0, R.drawable.ic_menu_forward),
+		REPEAT_ALL(1, R.drawable.ic_menu_revert),
+		REPEAT_ONE(2, R.drawable.ic_menu_refresh);
 		public static PlaybackMode getNext(PlaybackMode current) {
 			int nextId = (current.getId() + 1) % PlaybackMode.values().length;
 			for (PlaybackMode mode : PlaybackMode.values()) {
@@ -139,11 +142,6 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		Intent intent = new Intent(this, ReleaseActivity.class);
-		intent.putExtra(ReleaseActivity.RELEASE_GROUP_MBID, "4ffb0057-6256-33c0-b71e-23b7f8403f12");
-
-		Log.v("baweyLog", "creating PlayerActivity - start");
-		this.setContentView(R.layout.player_layout);
 		progressBarHandler = new Handler();
 		if (mp == null) {
 			mp = new MediaPlayer();
@@ -250,4 +248,10 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 			}
 		});
 	}
+
+	@Override
+	public int getLayoutId() {
+		return R.layout.player_layout;
+	}
+
 }

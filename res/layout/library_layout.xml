@@ -75,13 +75,13 @@
             android:text="fetch" />
     </LinearLayout>
 
-    <ListView
+    <com.github.bawey.melotonine.customGui.SwipeableListView
         android:id="@+id/libraryMatches"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight=".8"
         android:orientation="horizontal" >
-    </ListView>
+    </com.github.bawey.melotonine.customGui.SwipeableListView>
     <!-- </ScrollView> -->
     <!-- footer -->
 

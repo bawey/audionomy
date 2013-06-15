@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VK leech</string>
+    <string name="app_name">Melotonine</string>
     <string name="butt_play">play</string>
     <string name="butt_pause">pause</string>
     <string name="butt_next">next</string>

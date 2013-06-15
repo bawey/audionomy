@@ -1,12 +1,15 @@
 package com.github.bawey.melotonine.activities.abstracts;
 
 import com.github.bawey.melotonine.Melotonine;
+import com.github.bawey.melotonine.R;
 import com.github.bawey.melotonine.activities.LibraryActivity;
-import com.github.bawey.melotonine.activities.MaintainanceActivity;
+import com.github.bawey.melotonine.activities.MaintenanceActivity;
 import com.github.bawey.melotonine.activities.PlayerActivity;
+import com.github.bawey.melotonine.enums.AppMode;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,10 +23,10 @@ public class AbstractMenuActivity extends Activity {
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
-		menu.add(0, MENU_COLLECTION, 0, "Media");
-		menu.add(0, MENU_PLAYING, 0, "Player");
-		menu.add(0, MENU_MODE, 0, ((Melotonine) getApplication()).isRemote() ? "Go local" : "Go remote");
-		menu.add(0, MENU_MAINTAINANCE, 0, "Maintainance");
+		menu.add(0, MENU_COLLECTION, 0, getResources().getString(R.string.activity_media));
+		menu.add(0, MENU_PLAYING, 0, getResources().getString(R.string.activity_player));
+		menu.add(0, MENU_MODE, 0, ((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE ? "Go local" : "Go remote");
+		menu.add(0, MENU_MAINTAINANCE, 0, getResources().getString(R.string.activity_settings));
 		return super.onPrepareOptionsMenu(menu);
 	}
 
@@ -38,10 +41,15 @@ public class AbstractMenuActivity extends Activity {
 			intent = new Intent(this, PlayerActivity.class);
 			break;
 		case MENU_MODE:
-			((Melotonine) getApplication()).switchMode();
+			Melotonine app = (Melotonine) getApplication();
+			if (app.getAppMode() == AppMode.REMOTE) {
+				app.goLocal();
+			} else {
+				app.goRemote(this instanceof AbstractFullscreenActivity ? (AbstractFullscreenActivity) this : null);
+			}
 			break;
 		case MENU_MAINTAINANCE:
-			intent = new Intent(this, MaintainanceActivity.class);
+			intent = new Intent(this, MaintenanceActivity.class);
 			break;
 		default:
 			break;

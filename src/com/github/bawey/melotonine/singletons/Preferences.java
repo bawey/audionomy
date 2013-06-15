@@ -1,31 +1,37 @@
 package com.github.bawey.melotonine.singletons;
 
-import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Date;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
-public class Settings {
+public class Preferences {
 
-	private static Settings instance;
+	private static Preferences instance;
 
-	private Settings() {
+	private Preferences() {
 	}
 
-	public static Settings getInstance() {
+	public static boolean isInit() {
+		return instance != null;
+	}
+
+	public static Preferences getInstance() {
 		if (instance == null) {
 			throw new RuntimeException("Requested non-initialized Settings object");
 		}
 		return instance;
 	}
 
+	public Context getContext() {
+		return this.context;
+	}
+
 	public static synchronized void init(Context context) {
 		if (instance == null) {
-			instance = new Settings();
+			instance = new Preferences();
 			instance.restore(context);
 			instance.context = context;
 		}

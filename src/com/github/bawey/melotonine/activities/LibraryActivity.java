@@ -24,7 +24,6 @@ public class LibraryActivity extends AbstractLibraryActivity {
 	private String currentQuery = "";
 	private int rowMode = OnlineLibraryRowAdapter.ROW_MODE_ARTIST;
 
-	
 	private OnEditorActionListener editorActionListener = new OnEditorActionListener() {
 
 		/** TODO: gets launched twice upon pressing enter **/
@@ -45,8 +44,6 @@ public class LibraryActivity extends AbstractLibraryActivity {
 		}
 	};
 
-
-	
 	@Override
 	public String getArtistMbid() {
 		// TODO Auto-generated method stub
@@ -62,7 +59,6 @@ public class LibraryActivity extends AbstractLibraryActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.library_layout);
 
 		libraryList = (ListView) findViewById(R.id.libraryMatches);
 
@@ -101,33 +97,9 @@ public class LibraryActivity extends AbstractLibraryActivity {
 		return this.libraryList;
 	}
 
-	// private OnItemClickListener listItemClickListener = new
-	// OnItemClickListener() {
-	//
-	// @Override
-	// public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long
-	// arg3) {
-	// String text = null;
-	// Intent intent = null;
-	// if (lra.getRecordings() != null) {
-	// text = lra.getRecordings().get(arg2).getTitle();
-	// } else if (lra.getArtists() != null) {
-	// text = lra.getArtists().get(arg2).getName();
-	// intent = new Intent(getApplicationContext(), ArtistActivity.class);
-	// intent.putExtra(ArtistActivity.ARTIST_MBID,
-	// lra.getArtists().get(arg2).getMbid());
-	// } else if (lra.getReleases() != null) {
-	// text = lra.getReleases().get(arg2).getTitle();
-	// intent = new Intent(getApplicationContext(), ReleaseActivity.class);
-	// intent.putExtra(ReleaseActivity.RELEASE_GROUP_MBID,
-	// lra.getReleases().get(arg2).getMbid());
-	// }
-	// if (intent != null) {
-	// startActivity(intent);
-	// }
-	// Toast.makeText(LibraryActivity.this, text, Toast.LENGTH_LONG).show();
-	// }
-	//
-	// };
+	@Override
+	public int getLayoutId() {
+		return R.layout.library_layout;
+	}
 
 }

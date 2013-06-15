@@ -45,4 +45,7 @@
     <string name="connection_error">Error: connection down</string>
     <string name="gibberish_data_error">Error: server returned illegible response</string>
     <string name="enqueued">Item enqueued for playback</string>
+    <string name="activity_media">Media</string>
+    <string name="activity_player">Player</string>
+    <string name="activity_settings">Maintenance</string>
 </resources>

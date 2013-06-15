@@ -22,6 +22,7 @@ import com.github.bawey.melotonine.activities.abstracts.AbstractLibraryActivity;
 import com.github.bawey.melotonine.adapters.OnlineLibraryRowAdapter;
 import com.github.bawey.melotonine.db.DatabaseHelper;
 import com.github.bawey.melotonine.db.DbArtist;
+import com.github.bawey.melotonine.enums.AppMode;
 import com.github.bawey.melotonine.singletons.LocalContentManager;
 import com.github.bawey.melotonine.singletons.MusicMetaProvider;
 
@@ -61,7 +62,6 @@ public class ArtistActivity extends AbstractLibraryActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.artist_layout);
 
 		arid = getIntent().getExtras().getString(ARTIST_MBID);
 		mmp = MusicMetaProvider.getInstance();
@@ -75,7 +75,8 @@ public class ArtistActivity extends AbstractLibraryActivity {
 	private void setAllUp() throws IOException {
 		DbArtist dbArtist = DatabaseHelper.getInstance().getArtistByMbid(arid);
 		Artist mbArtist = null;
-		if ((dbArtist == null || dbArtist.getCountry() == null || dbArtist.getName() == null) && ((Melotonine) getApplication()).isRemote()) {
+		if ((dbArtist == null || dbArtist.getCountry() == null || dbArtist.getName() == null)
+				&& ((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 			mbArtist = mmp.lookupArtist(arid);
 			if (dbArtist == null) {
 				dbArtist = new DbArtist(mbArtist);
@@ -87,19 +88,18 @@ public class ArtistActivity extends AbstractLibraryActivity {
 			}
 		}
 
-		//rgInfos = mbArtist.getReleaseGroups();
+		// rgInfos = mbArtist.getReleaseGroups();
 
 		((TextView) findViewById(R.id.artist_country)).setText(dbArtist.getCountry());
 		((TextView) findViewById(R.id.artist_name)).setText(dbArtist.getName());
 
 		if (dbArtist.getImagePath() == null || !new File(dbArtist.getImagePath()).exists()) {
-			if (((Melotonine) getApplication()).isRemote()) {
+			if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
 				LocalContentManager.getInstance().requestArtistImageDownload(arid);
 			}
-		}else{
+		} else {
 			((ImageView) findViewById(R.id.artist_image)).setImageDrawable(Drawable.createFromPath(dbArtist.getImagePath()));
 		}
-
 
 		revalidateList();
 
@@ -119,4 +119,11 @@ public class ArtistActivity extends AbstractLibraryActivity {
 			}
 		});
 	}
+
+	@Override
+	public int getLayoutId() {
+		return R.layout.artist_layout;
+	}
+	
+	
 }

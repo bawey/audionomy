@@ -60,7 +60,7 @@ import com.github.bawey.melotonine.singletons.Constants;
 import com.github.bawey.melotonine.singletons.LocalContentManager;
 import com.github.bawey.melotonine.singletons.MusicMetaProvider;
 import com.github.bawey.melotonine.singletons.PlaybackQueue;
-import com.github.bawey.melotonine.singletons.Settings;
+import com.github.bawey.melotonine.singletons.Preferences;
 import com.github.bawey.melotonine.singletons.VkApi;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.perm.kate.api.Audio;
@@ -250,6 +250,14 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 
 		if (imageIcons.get(position) != null) {
 			imageView.setImageDrawable(imageIcons.get(position));
+		} else {
+			if (rowMode == ROW_MODE_SONG) {
+				imageView.setImageResource(R.drawable.ic_speaker);
+			} else if (rowMode == ROW_MODE_ALBUM) {
+				imageView.setImageResource(R.drawable.ic_album);
+			} else {
+				imageView.setImageResource(R.drawable.ic_mic);
+			}
 		}
 
 		StringBuilder textBuilder = new StringBuilder();
@@ -287,7 +295,7 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 					Resources r = context.getResources();
 					Drawable[] layers = new Drawable[2];
 					layers[1] = r.getDrawable(R.drawable.btn_check_buttonless_on);
-					layers[0] = release == null ? imageView.getDrawable() : layers[1];
+					layers[0] = imageView.getDrawable();
 					LayerDrawable layerDrawable = new LayerDrawable(layers);
 					imageView.setImageDrawable(layerDrawable);
 				} else {
@@ -366,7 +374,8 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 				if (rhs.getReleaseGroupMbid() == null) {
 					return -1;
 				} else {
-					return (int) Math.signum(mbidOccurencies.get(rhs.getReleaseGroupMbid()) - mbidOccurencies.get(lhs.getReleaseGroupMbid()));
+					return (int) Math.signum(mbidOccurencies.get(rhs.getReleaseGroupMbid())
+							- mbidOccurencies.get(lhs.getReleaseGroupMbid()));
 				}
 			}
 		}
@@ -480,15 +489,16 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 							if (rGroupInfo == null) {
 								// TODO: bite in here
 								List<ReleaseGroupInfo> relGroupInfos = MusicMetaProvider.getInstance().searchReleaseGroup(rgid);
-								Log.d(LibraryActivity.class.getSimpleName(), "found " + relGroupInfos.size() + " release groups by id: " + rgid);
+								Log.d(LibraryActivity.class.getSimpleName(), "found " + relGroupInfos.size() + " release groups by id: "
+										+ rgid);
 								if (relGroupInfos.size() > 0) {
 									rGroupInfo = relGroupInfos.get(0);
 								}
 							}
 							if (rGroupInfo != null) {
 								// find albums on lastfm
-								Log.d(LibraryActivity.class.getSimpleName(),
-										"fetch album covers for " + rGroupInfo.getTitle() + " by " + rGroupInfo.getTitle());
+								Log.d(LibraryActivity.class.getSimpleName(), "fetch album covers for " + rGroupInfo.getTitle() + " by "
+										+ rGroupInfo.getTitle());
 								Collection<Album> albums = Album.search(rGroupInfo.getTitle(), rGroupInfo.getArtists().get(0).getName(),
 										Constants.LASTFM_API_KEY);
 								for (Album album : albums) {
@@ -623,10 +633,12 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			final Resources r = context.getResources();
 
 			if (getRecordings() != null || getTracks() != null) {
-				final String artist = getRecordings() != null ? recordings.get(i).getArtist().getName() : release.getArtists().get(0).getName();
+				final String artist = getRecordings() != null ? recordings.get(i).getArtist().getName() : release.getArtists().get(0)
+						.getName();
 				final String title = getRecordings() != null ? recordings.get(i).getTitle() : tracks.get(i).getTitle();
 				final String mbid = getRecordings() != null ? getRecordings().get(i).getMbid() : getTracks().get(i).getRecordingMbid();
-				final int duration = getRecordings() != null ? getRecordings().get(i).getLength() / 1000 : getTracks().get(i).getDuration() / 1000;
+				final int duration = getRecordings() != null ? getRecordings().get(i).getLength() / 1000
+						: getTracks().get(i).getDuration() / 1000;
 				final String releaseTitle = getRecordings() != null ? recordings.get(i).getReleaseGroupTitle() : release.getTitle();
 
 				final List<MatchBox> vkMatches = getMatchBoxes(i);
@@ -657,9 +669,11 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 								}
 							} else {
 								if (options.get(choice).equals(r.getString(R.string.playback_local))) {
-									PlaybackQueue.getInstance().enqueue(dbDownload.getFilePath(), title, artist, duration, releaseTitle, null);
+									PlaybackQueue.getInstance().enqueue(dbDownload.getFilePath(), title, artist, duration, releaseTitle,
+											null);
 								} else if (options.get(choice).equals(r.getString(R.string.playback_remote))) {
-									PlaybackQueue.getInstance().enqueue(vkMatches.get(0).audio.url, title, artist, duration, releaseTitle, null);
+									PlaybackQueue.getInstance().enqueue(vkMatches.get(0).audio.url, title, artist, duration, releaseTitle,
+											null);
 								}
 							}
 						}
@@ -729,13 +743,13 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 				vkMatches = new LinkedList<List<MatchBox>>();
 				int requestCounter = 0;
 				boolean needMoreMatches = true;
-				int resultsNo = Settings.getInstance().getSearchResultsLimit();
+				int resultsNo = Preferences.getInstance().getSearchResultsLimit();
 
 				do {
 					needMoreMatches = false;
 					queryResults = null;
 					int attempts = 0;
-					while (queryResults == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+					while (queryResults == null && attempts < Preferences.getInstance().getApiRequeriesLimit()) {
 						try {
 							queryResults = vk.searchAudio(searchQuery, "1", "0", (long) resultsNo, (long) resultsNo * requestCounter++);
 						} catch (KException kex) {
@@ -744,7 +758,7 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 						}
 						Thread.sleep(attempts * 300);
 					}
-					if (attempts > Settings.getInstance().getApiRequeriesLimit()) {
+					if (attempts > Preferences.getInstance().getApiRequeriesLimit()) {
 						((AbstractFullscreenActivity) context).bridgeToUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -819,7 +833,7 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 
 							List<Audio> audios = null;
 							int attempts = 0;
-							while (audios == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+							while (audios == null && attempts < Preferences.getInstance().getApiRequeriesLimit()) {
 								try {
 									audios = vk.searchAudio(artist + " " + title, "1", "0", 100l, 0l);
 								} catch (KException kex) {
@@ -854,7 +868,7 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 							int attempts = 0;
 							String artist = recordings.get(recNo).getArtist().getName();
 							String title = recordings.get(recNo).getTitle();
-							while (audios == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+							while (audios == null && attempts < Preferences.getInstance().getApiRequeriesLimit()) {
 								try {
 									audios = vk.searchAudio(artist + " " + title, "1", "0", 100l, 0l);
 								} catch (KException kex) {
@@ -962,13 +976,13 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 		} else {
 			score *= 1.25;
 		}
-		Settings.getInstance().dump(" [" + score + "] \n");
+		Preferences.getInstance().dump(" [" + score + "] \n");
 		return Math.round(score);
 	}
 
 	public static int computeMatchScore(Audio audio, Track track, Release release) {
-		return computeMatchScore(audio, release.getArtists().get(0).getName().toLowerCase(), release.getTitle().toLowerCase(), track.getTitle()
-				.toLowerCase(), track.getDuration());
+		return computeMatchScore(audio, release.getArtists().get(0).getName().toLowerCase(), release.getTitle().toLowerCase(), track
+				.getTitle().toLowerCase(), track.getDuration());
 	}
 
 	// TODO: store data retrieved by cover-finder (album titles)

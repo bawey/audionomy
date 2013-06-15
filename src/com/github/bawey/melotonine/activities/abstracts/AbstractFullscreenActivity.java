@@ -1,29 +1,41 @@
 package com.github.bawey.melotonine.activities.abstracts;
 
-import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.View.OnTouchListener;
 import android.view.Window;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.bawey.melotonine.Melotonine;
 import com.github.bawey.melotonine.R;
+import com.github.bawey.melotonine.activities.LibraryActivity;
 import com.github.bawey.melotonine.activities.LoginActivity;
-import com.github.bawey.melotonine.activities.ReleaseActivity;
-import com.github.bawey.melotonine.receivers.ModeChangedReceiver;
+import com.github.bawey.melotonine.activities.MaintenanceActivity;
+import com.github.bawey.melotonine.activities.PlayerActivity;
+import com.github.bawey.melotonine.enums.AppMode;
+import com.github.bawey.melotonine.enums.NetMode;
+import com.github.bawey.melotonine.listeners.GestureListener;
+import com.github.bawey.melotonine.receivers.AppModeChangeReceiver;
 import com.github.bawey.melotonine.singletons.Constants;
-import com.github.bawey.melotonine.singletons.Settings;
+import com.github.bawey.melotonine.singletons.Preferences;
 import com.github.bawey.melotonine.singletons.VkApi;
 
-public class AbstractFullscreenActivity extends AbstractMenuActivity {
+public abstract class AbstractFullscreenActivity extends AbstractMenuActivity {
 
 	protected final static int REQUEST_LOGIN = 1;
-	private ModeChangedReceiver modeChangedReceiver;
+	private AppModeChangeReceiver modeChangedReceiver;
 	private Thread backgroundRunner;
+	private GestureDetector gestureDetector = null;
 	private Semaphore backgroundRunnerMutex = new Semaphore(1);
 
 	protected synchronized void launchBackgroundRunner(Runnable r) {
@@ -50,28 +62,65 @@ public class AbstractFullscreenActivity extends AbstractMenuActivity {
 		startActivityForResult(intent, REQUEST_LOGIN);
 	}
 
-	
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// vk.com authentication required for the application to work
-		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		try {
-			if (((Melotonine) getApplication()).isRemote()) {
-				if (VkApi.getInstance() == null || VkApi.getInstance().getStatus(Settings.getInstance().getUserId()) == null) {
-					if (Settings.getInstance().getAccessToken() == null) {
-						startLoginActivity();
-					} else {
-						VkApi.init(Settings.getInstance().getAccessToken(), Constants.VK_API_KEY);
-					}
-				}
-			}
-		} catch (Exception e) {
-			startLoginActivity();
+		if (requestWindowFeature(Window.FEATURE_CUSTOM_TITLE)) {
+			Log.d(this.getClass().getSimpleName(), "Setting custom titlebar");
+			this.setContentView(this.getLayoutId());
+			getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar_layout);
+		}
+
+		// TODO: this is extremely ugly and dirty!
+		TextView activityTitle = (TextView) findViewById(R.id.activityTitle);
+		ImageView libImg = (ImageView) findViewById(R.id.imageBasket);
+		ImageView plrImg = (ImageView) findViewById(R.id.imagePlay);
+		ImageView stgImg = (ImageView) findViewById(R.id.imageSettings);
+		ImageView toBlur[] = null;
+
+		if (this instanceof LibraryActivity) {
+			activityTitle.setText(R.string.activity_media);
+			blurImageViews(new ImageView[] { plrImg, stgImg });
+		} else if (this instanceof PlayerActivity) {
+			activityTitle.setText(R.string.activity_player);
+			blurImageViews(new ImageView[] { libImg, stgImg });
+		} else if (this instanceof MaintenanceActivity) {
+			activityTitle.setText(R.string.activity_settings);
+			blurImageViews(new ImageView[] { libImg, plrImg });
+		} else {
+			activityTitle.setText("");
+			blurImageViews(new ImageView[] { libImg, plrImg, stgImg });
+		}
+		// getWindow().getDecorView().setOnTouchListener(new OnTouchListener() {
+		//
+		// @Override
+		// public boolean onTouch(View v, MotionEvent event) {
+		// if (gestureDetector == null) {
+		// gestureDetector = new GestureDetector(new
+		// GestureListener(AbstractFullscreenActivity.this));
+		// }
+		// gestureDetector.onTouchEvent(event);
+		// return false;
+		// }
+		// });
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		Log.d("Swiper", "AFA onTouchEvent");
+		if (gestureDetector == null) {
+			gestureDetector = new GestureDetector(new GestureListener(AbstractFullscreenActivity.this));
+		}
+		gestureDetector.onTouchEvent(event);
+		return false;
+	}
+
+	private void blurImageViews(ImageView[] views) {
+		for (ImageView img : views) {
+			img.setAlpha(127);
 		}
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -81,20 +130,32 @@ public class AbstractFullscreenActivity extends AbstractMenuActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		modeChangedReceiver = new ModeChangedReceiver(this);
-		this.registerReceiver(modeChangedReceiver, new IntentFilter(Melotonine.NETWORK_MODE_CHANGED));
-		this.registerReceiver(modeChangedReceiver, new IntentFilter(Melotonine.NETWORK_UNAVAILABLE));
+		modeChangedReceiver = new AppModeChangeReceiver(this);
+		this.registerReceiver(modeChangedReceiver, new IntentFilter(Melotonine.APP_MODE_CHANGED));
+		this.registerReceiver(modeChangedReceiver, new IntentFilter(Melotonine.NETWORK_GONE));
+
+		Melotonine app = (Melotonine) getApplication();
+		if (app.getNetMode() == NetMode.ONLINE) {
+			if (!app.isDeviceOnline()) {
+				app.goLocal();
+			} else if (app.getAppMode() == AppMode.REMOTE && !app.isVkUserAuthenticated()) {
+				startLoginActivity();
+			}
+		}
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_LOGIN) {
 			if (resultCode == RESULT_OK) {
-				Settings.getInstance().setAccessToken(data.getStringExtra("token"));
-				Settings.getInstance().setUserId(data.getLongExtra("user_id", 0));
-				Settings.getInstance().save(AbstractFullscreenActivity.this);
+				Preferences.getInstance().setAccessToken(data.getStringExtra("token"));
+				Preferences.getInstance().setUserId(data.getLongExtra("user_id", 0));
+				Preferences.getInstance().save(AbstractFullscreenActivity.this);
 
-				VkApi.init(Settings.getInstance().getAccessToken(), Constants.VK_API_KEY);
+				VkApi.init(Preferences.getInstance().getAccessToken(), Constants.VK_API_KEY);
+				((Melotonine) getApplication()).setNetModeInternallyOnly(NetMode.AUTHENTICATED);
+			} else {
+				((Melotonine) getApplication()).setNetModeInternallyOnly(NetMode.ONLINE);
 			}
 		}
 	}
@@ -126,5 +187,7 @@ public class AbstractFullscreenActivity extends AbstractMenuActivity {
 			((AbstractLibraryActivity) this).handleModeSwitch();
 		}
 	}
+
+	public abstract int getLayoutId();
 
 }

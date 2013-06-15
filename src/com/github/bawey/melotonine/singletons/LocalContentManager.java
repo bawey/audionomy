@@ -506,7 +506,7 @@ public class LocalContentManager {
 
 			// find all *mp3 files and delete them if not present in database
 			List<File> dirsToCheck = new LinkedList<File>();
-			dirsToCheck.add(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), Settings.getInstance()
+			dirsToCheck.add(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), Preferences.getInstance()
 					.getMusicDir()));
 			while (!dirsToCheck.isEmpty()) {
 				File currentDir = dirsToCheck.get(0);
