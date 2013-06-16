@@ -21,6 +21,8 @@ public abstract class AbstractLibraryRowAdapter extends BaseAdapter {
 	protected static final int SUFFICIENT_SCORE = 95;
 	protected static final float VK_ALBUMS_TO_SONGS_VARIANCE = 0.1f;
 
+	protected int rowMode;
+
 	protected Set<Integer> checked = new HashSet<Integer>();
 
 	protected OnCheckedChangeListener checkingListener = new OnCheckedChangeListener() {
@@ -36,14 +38,14 @@ public abstract class AbstractLibraryRowAdapter extends BaseAdapter {
 
 	public static String vkAudioPrinter(Audio audio) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(audio.artist).append(": ").append(audio.title).append(" (").append(String.format("%02d", audio.duration / 60)).append(":")
-				.append(String.format("%02d", audio.duration % 60)).append(")");
+		sb.append(audio.artist).append(": ").append(audio.title).append(" (").append(String.format("%02d", audio.duration / 60))
+				.append(":").append(String.format("%02d", audio.duration % 60)).append(")");
 		return sb.toString();
 	}
 
 	public static String songPrinter(Song song) {
-		return new StringBuilder().append(song.getArtist()).append(" - ").append(song.getTitle()).
-		append(" (").append(String.format("%02d", song.getDuration() / 60)).append(":").append(String.format("%02d", song.getDuration() % 60))
+		return new StringBuilder().append(song.getArtist()).append(" - ").append(song.getTitle()).append(" (")
+				.append(String.format("%02d", song.getDuration() / 60)).append(":").append(String.format("%02d", song.getDuration() % 60))
 				.append(")").toString();
 	}
 
@@ -51,6 +53,14 @@ public abstract class AbstractLibraryRowAdapter extends BaseAdapter {
 
 	public Set<Integer> getChecked() {
 		return checked;
+	}
+
+	public int getRowMode() {
+		return rowMode;
+	}
+
+	public void setRowMode(int rowMode) {
+		this.rowMode = rowMode;
 	}
 
 	abstract public OnItemClickListener getListItemClickListener();

@@ -1,14 +1,16 @@
 package com.github.bawey.melotonine.customGui;
 
-import com.github.bawey.melotonine.activities.abstracts.AbstractFullscreenActivity;
-import com.github.bawey.melotonine.listeners.FullscreenActivities;
-
 import android.content.Context;
 import android.content.Intent;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.widget.ListView;
+
+import com.github.bawey.melotonine.activities.abstracts.AbstractFullscreenActivity;
+import com.github.bawey.melotonine.listeners.FullscreenActivities;
+import com.github.bawey.melotonine.listeners.GestureListener;
 
 public class SwipeableListView extends ListView {
 
@@ -59,15 +61,15 @@ public class SwipeableListView extends ListView {
 
 		case MotionEvent.ACTION_UP:
 			Log.d("Swiper", "Releasing: X=" + mDiffX + ", Y=" + mDiffY);
-			// don't intercept event, when user tries to scroll vertically
 			if (Math.abs(mDiffX) > Math.abs(mDiffY)) {
 				if (ctx != null) {
 					// TODO ugly again!
 					FullscreenActivities fa = FullscreenActivities.getByClass(ctx.getClass());
-					fa = mDiffX > 0 ? fa.getNext() : fa.getPrev();
-					Intent i = new Intent(ctx, fa.getActivityClass());
-					ctx.startActivity(i);
-					// ctx.onTouchEvent(ev);
+					if (Math.abs(mDiffX) > GestureListener.getMinDistance()) {
+						fa = mDiffX < 0 ? fa.getNext() : fa.getPrev();
+						Intent i = new Intent(ctx, fa.getLaunchableClass());
+						ctx.startActivity(i);
+					}
 				}
 				return false; // do not react to horizontal touch events, these
 								// events will be passed to your list item view
@@ -75,12 +77,6 @@ public class SwipeableListView extends ListView {
 		}
 
 		return super.onTouchEvent(ev);
-	}
-
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev) {
-
-		return false;
 	}
 
 }

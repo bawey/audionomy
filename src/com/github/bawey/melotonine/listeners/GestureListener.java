@@ -12,9 +12,17 @@ import com.github.bawey.melotonine.activities.abstracts.AbstractFullscreenActivi
 
 public class GestureListener extends SimpleOnGestureListener {
 
-	private float minDistance = 0;
-	private float thresholdVelocity = 0;
+	private static float minDistance = 120;
+	private static float thresholdVelocity = 240;
 	private AbstractFullscreenActivity parentActivity;
+
+	public static float getMinDistance() {
+		return minDistance;
+	}
+
+	public static float getThresholdVelocity() {
+		return thresholdVelocity;
+	}
 
 	public GestureListener(AbstractFullscreenActivity parentActivity) {
 		super();
@@ -32,11 +40,11 @@ public class GestureListener extends SimpleOnGestureListener {
 		Intent i = null;
 		Log.d("Swiper", "Vx: " + velocityX + ", Vy:" + velocityY + ", Xdist" + (e1.getX() - e2.getX()));
 		if (e1.getX() - e2.getX() > minDistance && Math.abs(velocityX) > thresholdVelocity) {
-			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getPrev().getActivityClass());
+			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getNext().getLaunchableClass());
 			parentActivity.startActivity(i);
 			return false; // Right to left
 		} else if (e2.getX() - e1.getX() > minDistance && Math.abs(velocityX) > thresholdVelocity) {
-			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getNext().getActivityClass());
+			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getPrev().getLaunchableClass());
 			parentActivity.startActivity(i);
 			return false; // Left to right
 		}

@@ -55,7 +55,7 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 	}
 
 	private AbstractLibraryActivity libraryActivity;
-	private int rowMode;
+	
 
 	public OfflineLibraryRowAdapter(AbstractLibraryActivity libraryActivity, int rowMode, String query) {
 		this.libraryActivity = libraryActivity;

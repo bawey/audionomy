@@ -1,79 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    style="@style/ViewContainer"
     android:layout_gravity="center"
     android:orientation="vertical" >
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal" >
-
-        <ImageButton
-            android:id="@+id/button5"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_purge_list"
-            android:onClick="clearPlaylist"
-            android:src="@drawable/ic_menu_delete" />
-
-        <ImageButton
-            android:id="@+id/button1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_prev"
-            android:onClick="prevTrack"
-            android:src="@drawable/ic_media_previous" />
-
-        <ImageButton
-            android:id="@+id/button2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_play"
-            android:onClick="playAudioIfPending"
-            android:src="@drawable/ic_media_play" />
-
-        <ImageButton
-            android:id="@+id/button3"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_pause"
-            android:onClick="pauseAudio"
-            android:src="@drawable/ic_media_pause" />
-
-        <ImageButton
-            android:id="@+id/button4"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_next"
-            android:onClick="nextTrack"
-            android:src="@drawable/ic_media_next" />
-
-        <ImageButton
-            android:id="@+id/button6"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/butt_stop"
-            android:onClick="stopAudio"
-            android:src="@drawable/ic_media_stop" />
-
-        <ImageButton
-            android:id="@+id/button7"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:contentDescription="@string/playback_mode"
-            android:onClick="switchPlaybackMode"
-            android:src="@drawable/ic_menu_forward" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/altMessage"
+        style="@style/MessageTextView"
+        android:text="@string/player_playlist_empty"
+        android:visibility="gone" >
+    </TextView>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -129,6 +65,83 @@
         android:id="@+id/progressBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <ImageButton
+            android:id="@+id/button5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_purge_list"
+            android:onClick="clearPlaylist"
+            android:src="@drawable/ic_menu_delete" />
+
+        <ImageButton
+            android:id="@+id/button1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_prev"
+            android:onClick="prevTrack"
+            android:src="@drawable/ic_media_previous" />
+
+        <ImageButton
+            android:id="@+id/button2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_play"
+            android:onClick="playAudioIfPending"
+            android:src="@drawable/ic_media_play" />
+
+        <ImageButton
+            android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_pause"
+            android:onClick="pauseAudio"
+            android:src="@drawable/ic_media_pause" />
+
+        <ImageButton
+            android:id="@+id/button4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_next"
+            android:onClick="nextTrack"
+            android:src="@drawable/ic_media_next" />
+
+        <ImageButton
+            android:id="@+id/button6"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/butt_stop"
+            android:onClick="stopAudio"
+            android:src="@drawable/ic_media_stop" />
+
+        <ImageButton
+            android:id="@+id/button7"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.14"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/playback_mode"
+            android:onClick="switchPlaybackMode"
+            android:src="@drawable/ic_menu_forward" />
+    </LinearLayout>
 
     <!--
     <ScrollView>

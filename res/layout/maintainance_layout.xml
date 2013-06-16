@@ -2,8 +2,8 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:layout_gravity="center"
-    android:gravity="center"
+    android:layout_gravity="top"
+    android:gravity="top"
     android:padding="5dip"
     android:shrinkColumns="1"
     android:stretchColumns="1" >
@@ -11,7 +11,8 @@
     <TableRow
         android:id="@+id/tableRow0"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/textView1"
@@ -31,7 +32,8 @@
     <TableRow
         android:id="@+id/tableRow1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/text_vk_relogin"
@@ -46,14 +48,17 @@
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/title_background"
             android:onClick="vkRelogin"
-            android:text="@string/execute" />
+            android:text="@string/execute"
+            android:textColor="@color/title_text" />
     </TableRow>
 
     <TableRow
         android:id="@+id/tableRow2"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/text_fix_integrity"
@@ -68,14 +73,17 @@
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/title_background"
             android:onClick="fixIntegrity"
-            android:text="@string/execute" />
+            android:text="@string/execute"
+            android:textColor="@color/title_text" />
     </TableRow>
 
     <TableRow
         android:id="@+id/tableRow3"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/textView3"
@@ -89,14 +97,17 @@
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@color/title_background"
             android:onClick="fillTags"
-            android:text="@string/execute" />
+            android:text="@string/execute"
+            android:textColor="@color/title_text" />
     </TableRow>
 
     <TableRow
         android:id="@+id/tableRow4"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/text_label_max_search_results"
@@ -109,8 +120,10 @@
             android:id="@+id/search_results_limit"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="@color/title_background"
             android:ems="9"
-            android:inputType="numberDecimal" >
+            android:inputType="numberDecimal"
+            android:textColor="@color/title_text" >
 
             <requestFocus />
         </EditText>
@@ -119,7 +132,8 @@
     <TableRow
         android:id="@+id/tableRow5"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <TextView
             android:id="@+id/text_label_api_requery_limit"
@@ -132,8 +146,10 @@
             android:id="@+id/api_requery_limit"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="@color/title_background"
             android:ems="9"
-            android:inputType="numberDecimal" >
+            android:inputType="numberDecimal"
+            android:textColor="@color/title_text" >
 
             <requestFocus />
         </EditText>
@@ -142,7 +158,8 @@
     <TableRow
         android:id="@+id/tableRow5"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_weight="1" >
 
         <Button
             android:id="@+id/button_apply"
@@ -150,8 +167,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_span="2"
+            android:background="@color/title_background"
             android:onClick="apply"
-            android:text="@string/apply" />
+            android:text="@string/apply"
+            android:textColor="@color/title_text" />
     </TableRow>
 
 </TableLayout>

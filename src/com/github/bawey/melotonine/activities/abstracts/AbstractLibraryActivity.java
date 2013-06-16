@@ -14,6 +14,8 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -42,11 +44,15 @@ import com.github.bawey.melotonine.singletons.PlaybackQueue;
 
 public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity {
 
+	protected static final int MENU_DOWNLOAD = 11;
+	protected static final int MENU_ENQUEUE = 12;
+	protected static final int MENU_DELETE = 14;
+	protected static final int MENU_INVERSE_SELECTION = 13;
+
 	protected AbstractLibraryRowAdapter lra;
 	private LibrarySongFetchedReceiver libraryReceiver;
 
 	private NewArtworkReceiver newArtworkReceiver;
-	private boolean buttonListenersAttached = false;
 	private Boolean modeOnExit;
 	private Resources r;
 
@@ -88,7 +94,9 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 			Log.d("DEBUG", "lra null? - " + (lra == null));
 			AbstractLibraryActivity.this.getLibraryListView().setAdapter(lra);
 			AbstractLibraryActivity.this.getLibraryListView().setOnItemClickListener(lra.getListItemClickListener());
-			AbstractLibraryActivity.this.getLibraryListView().setOnItemLongClickListener(lra.getListItemLongClickListener());
+			if (lra.getRowMode() == AbstractLibraryRowAdapter.ROW_MODE_SONG) {
+				AbstractLibraryActivity.this.getLibraryListView().setOnItemLongClickListener(lra.getListItemLongClickListener());
+			}
 			AbstractLibraryActivity.this.getLibraryListView().invalidate();
 			Log.d(this.getClass().getSimpleName(), "adapter set, list invalidated");
 		}
@@ -120,9 +128,6 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 			handleModeSwitch();
 		}
 
-		if (!buttonListenersAttached) {
-			setUpButtonsEnqueueFetch();
-		}
 		hideFilterInOffline();
 	}
 
@@ -150,7 +155,6 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 				((ReleaseActivity) this).setSpinnerUp(getReleaseGroupMbid());
 			}
 			revalidateList();
-			setUpButtonsEnqueueFetch();
 			hideFilterInOffline();
 		} catch (IOException e) {
 			Toast.makeText(this, r.getString(R.string.connection_error), Toast.LENGTH_SHORT).show();
@@ -199,114 +203,124 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 		Log.d("Download", "refreshed artwork with mbid " + mbid);
 	}
 
-	private void setUpButtonsEnqueueFetch() {
-		Button enqueue = (Button) findViewById(R.id.button_enqueue);
-		Button fetch = (Button) findViewById(R.id.button_fetch);
-		final Resources r = getResources();
-		if (enqueue != null && fetch != null) {
-			if (((Melotonine) getApplication()).getAppMode() == AppMode.REMOTE) {
-
-				fetch.setText("fetch");
-				fetch.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						OnlineLibraryRowAdapter olra = (OnlineLibraryRowAdapter) lra;
-						StringBuilder sb = new StringBuilder("checked: ");
-						if (olra.getChecked() == null || olra.getChecked().isEmpty()) {
-							Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
-							return;
-						}
-						for (Integer i : olra.getChecked()) {
-							sb.append(i).append(" ");
-							MatchBox vkMatch = olra.getVkMatches().get(i).get(0);
-							if (olra.getTracks() != null) {
-								LocalContentManager.getInstance().startDownload(vkMatch.audio.url, olra.getTracks().get(i),
-										olra.getRelease());
-							} else if (olra.getRecordings() != null) {
-								LocalContentManager.getInstance().startDownload(vkMatch.audio.url, olra.getRecordings().get(i));
-							}
-						}
-						olra.getChecked().clear();
-						// dbgMsg(sb.toString());
-					}
-				});
-				enqueue.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						OnlineLibraryRowAdapter olra = (OnlineLibraryRowAdapter) lra;
-						Song song = null;
-						if (olra.getChecked() == null || olra.getChecked().isEmpty()) {
-							Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
-							return;
-						}
-						for (Integer i : olra.getChecked()) {
-							song = new Song(olra.getVkMatches().get(i).get(0).audio.url);
-							if (olra.getTracks() != null) {
-								Track track = olra.getTracks().get(i);
-								song.setTitle(track.getTitle());
-								song.setDuration((short) (track.getDuration() / 1000));
-								song.setArtist(olra.getRelease().getArtists().get(0).getName());
-							} else if (olra.getRecordings() != null) {
-								RecordingInfo rInfo = olra.getRecordings().get(i);
-								song.setTitle(rInfo.getTitle());
-								song.setArtist(rInfo.getArtist().getName());
-								song.setDuration((short) (rInfo.getLength() / 1000));
-							}
-							PlaybackQueue.getInstance().enqueue(song);
-						}
-					}
-				});
-			} else {
-				fetch.setText("dispose");
-				fetch.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						final OfflineLibraryRowAdapter olra = (OfflineLibraryRowAdapter) lra;
-						if (olra.getChecked() == null || olra.getChecked().isEmpty()) {
-							Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
-							return;
-						}
-						if (olra.getRecordings() != null) {
-							AlertDialog ad = new AlertDialog.Builder(AbstractLibraryActivity.this).setTitle(R.string.delete_title)
-									.setMessage(R.string.delete_confirm).create();
-
-							ad.setButton(r.getString(R.string.yes), new DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									List<String> mbids = new LinkedList<String>();
-									for (Integer i : olra.getChecked()) {
-										mbids.add(olra.getRecordings().get(i).getMbid());
-									}
-									LocalContentManager.getInstance().removeDownloadedByMbids(mbids);
-									olra.getChecked().clear();
-								}
-							});
-							ad.setButton2(r.getString(R.string.no), (DialogInterface.OnClickListener) null);
-							ad.show();
-						}
-					}
-				});
-				enqueue.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						OfflineLibraryRowAdapter olra = (OfflineLibraryRowAdapter) lra;
-						if (olra.getChecked() == null || olra.getChecked().isEmpty()) {
-							Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
-							return;
-						}
-						if (olra.getRecordings() != null) {
-							List<DbRecording> recordingsToPlay = new LinkedList<DbRecording>();
-							for (int i : olra.getChecked()) {
-								recordingsToPlay.add(olra.getRecordings().get(i));
-							}
-							PlaybackQueue.getInstance().enqueueAllRecordings(recordingsToPlay);
-						}
-					}
-				});
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		boolean result = super.onPrepareOptionsMenu(menu);
+		if (lra != null && lra.getRowMode() == AbstractLibraryRowAdapter.ROW_MODE_SONG) {
+			if (lra.getChecked() != null && lra.getChecked().size() > 0) {
+				menu.add(0, MENU_ENQUEUE, 0, getResources().getString(R.string.menu_enqueue));
+				if (((Melotonine) getApplication()).getAppMode().equals(AppMode.REMOTE)) {
+					menu.add(0, MENU_DOWNLOAD, 0, getResources().getString(R.string.menu_download));
+				} else {
+					menu.add(0, MENU_DELETE, 0, getResources().getString(R.string.delete));
+				}
 			}
-			buttonListenersAttached = true;
+			menu.add(0, MENU_INVERSE_SELECTION, 0, getResources().getString(R.string.menu_invert_selection));
 		}
+		return result;
 	}
 
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (super.onOptionsItemSelected(item)) {
+			return true;
+		}
+		OnlineLibraryRowAdapter onLra = null;
+		switch (item.getItemId()) {
+		case MENU_DOWNLOAD:
+
+			onLra = (OnlineLibraryRowAdapter) lra;
+			StringBuilder sb = new StringBuilder("checked: ");
+			if (onLra.getChecked() == null || onLra.getChecked().isEmpty()) {
+				Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
+				return true;
+			}
+			for (Integer i : onLra.getChecked()) {
+				sb.append(i).append(" ");
+				MatchBox vkMatch = onLra.getVkMatches().get(i).get(0);
+				if (onLra.getTracks() != null) {
+					LocalContentManager.getInstance().startDownload(vkMatch.audio.url, onLra.getTracks().get(i), onLra.getRelease());
+				} else if (onLra.getRecordings() != null) {
+					LocalContentManager.getInstance().startDownload(vkMatch.audio.url, onLra.getRecordings().get(i));
+				}
+			}
+			onLra.getChecked().clear();
+
+			return true;
+
+		case MENU_DELETE:
+			final OfflineLibraryRowAdapter offLra = (OfflineLibraryRowAdapter) lra;
+			if (offLra.getChecked() == null || offLra.getChecked().isEmpty()) {
+				Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
+				return true;
+			}
+			if (offLra.getRecordings() != null) {
+				AlertDialog ad = new AlertDialog.Builder(AbstractLibraryActivity.this).setTitle(R.string.delete_title)
+						.setMessage(R.string.delete_confirm).create();
+
+				ad.setButton(r.getString(R.string.yes), new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						List<String> mbids = new LinkedList<String>();
+						for (Integer i : offLra.getChecked()) {
+							mbids.add(offLra.getRecordings().get(i).getMbid());
+						}
+						LocalContentManager.getInstance().removeDownloadedByMbids(mbids);
+						offLra.getChecked().clear();
+					}
+				});
+				ad.setButton2(r.getString(R.string.no), (DialogInterface.OnClickListener) null);
+				ad.show();
+			}
+
+			return true;
+
+		case MENU_ENQUEUE:
+			if (lra instanceof OnlineLibraryRowAdapter) {
+				onLra = (OnlineLibraryRowAdapter) lra;
+				Song song = null;
+				if (onLra.getChecked() == null || onLra.getChecked().isEmpty()) {
+					Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
+					return true;
+				}
+				for (Integer i : onLra.getChecked()) {
+					song = new Song(onLra.getVkMatches().get(i).get(0).audio.url);
+					if (onLra.getTracks() != null) {
+						Track track = onLra.getTracks().get(i);
+						song.setTitle(track.getTitle());
+						song.setDuration((short) (track.getDuration() / 1000));
+						song.setArtist(onLra.getRelease().getArtists().get(0).getName());
+					} else if (onLra.getRecordings() != null) {
+						RecordingInfo rInfo = onLra.getRecordings().get(i);
+						song.setTitle(rInfo.getTitle());
+						song.setArtist(rInfo.getArtist().getName());
+						song.setDuration((short) (rInfo.getLength() / 1000));
+					}
+					PlaybackQueue.getInstance().enqueue(song);
+				}
+
+			} else if (lra instanceof OfflineLibraryRowAdapter) {
+				OfflineLibraryRowAdapter olra = (OfflineLibraryRowAdapter) lra;
+				if (olra.getChecked() == null || olra.getChecked().isEmpty()) {
+					Toast.makeText(AbstractLibraryActivity.this, "Nothing selected", Toast.LENGTH_SHORT).show();
+					return true;
+				}
+				if (olra.getRecordings() != null) {
+					List<DbRecording> recordingsToPlay = new LinkedList<DbRecording>();
+					for (int i : olra.getChecked()) {
+						recordingsToPlay.add(olra.getRecordings().get(i));
+					}
+					PlaybackQueue.getInstance().enqueueAllRecordings(recordingsToPlay);
+				}
+
+			}
+			return true;
+		case MENU_INVERSE_SELECTION:
+			return false;
+		default:
+			break;
+		}
+		return false;
+	}
 }

@@ -1,30 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    style="@style/ViewContainer"
     android:orientation="vertical" >
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp" >
 
         <ImageView
             android:id="@+id/release_image"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginRight="10dp"
+            android:layout_weight="2"
+            android:adjustViewBounds="true"
             android:src="@drawable/ic_album" />
 
         <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="3"
             android:orientation="vertical" >
 
             <TextView
                 android:id="@+id/release_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="The Title of the Album"
+                android:text="The Title"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
 
             <TextView
@@ -34,40 +37,27 @@
                 android:text="The Artists"
                 android:textAppearance="?android:attr/textAppearanceMedium" />
 
-            <Spinner
-                android:id="@+id/releases_spinner"
+            <LinearLayout
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:paddingBottom="0dp"
-                android:paddingTop="0dp" />
+                android:layout_height="fill_parent"
+                android:gravity="bottom"
+                android:orientation="vertical" >
+
+                <Spinner
+                    android:id="@+id/releases_spinner"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:paddingBottom="0dp"
+                    android:paddingTop="0dp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-
-        <Button
-            android:id="@+id/button_enqueue"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:text="enqueue" />
-
-        <Button
-            android:id="@+id/button_fetch"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:text="fetch" />
-    </LinearLayout>
-
-    <ListView
+    <com.github.bawey.melotonine.customGui.SwipeableListView
         android:id="@+id/songs_list"
         android:layout_width="match_parent"
         android:layout_height="fill_parent" >
-    </ListView>
+    </com.github.bawey.melotonine.customGui.SwipeableListView>
 
 </LinearLayout>

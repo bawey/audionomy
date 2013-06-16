@@ -244,6 +244,8 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 				}
 				Log.d(this.getClass().getName(), "starting playlist update");
 				playlistAdapter.notifyDataSetChanged();
+				((TextView) findViewById(R.id.altMessage))
+						.setVisibility(queue.getPlaybackQueueList().size() > 0 ? View.GONE : View.VISIBLE);
 				Log.d(this.getClass().getName(), "ending playlist update");
 			}
 		});

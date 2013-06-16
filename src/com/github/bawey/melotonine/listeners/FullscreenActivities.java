@@ -26,7 +26,7 @@ public enum FullscreenActivities {
 	private int titleBarTextId;
 	private int titleBarIconId;
 
-	public Class<?> getActivityClass() {
+	public Class<?> getLaunchableClass() {
 		return classOverride != null ? classOverride : activityClass;
 
 	}
@@ -57,10 +57,14 @@ public enum FullscreenActivities {
 
 	public static FullscreenActivities getByClass(Class<?> cls) {
 		for (FullscreenActivities fa : FullscreenActivities.values()) {
-			if (fa.getActivityClass().isAssignableFrom(cls)) {
+			if (fa.getDistinctiveClass().isAssignableFrom(cls)) {
 				return fa;
 			}
 		}
 		return null;
+	}
+
+	public Class<?> getDistinctiveClass() {
+		return this.activityClass;
 	}
 }

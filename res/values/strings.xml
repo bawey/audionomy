@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VK leech</string>
+    <string name="app_name">Audionomy</string>
     <string name="butt_play">play</string>
     <string name="butt_pause">pause</string>
     <string name="butt_next">next</string>
@@ -48,4 +48,14 @@
     <string name="activity_media">Media</string>
     <string name="activity_player">Player</string>
     <string name="activity_settings">Maintenance</string>
+    <string name="menu_go_remote">Go remote</string>
+    <string name="menu_go_local">Go local</string>
+    <string name="menu_exit">Exit</string>
+    <string name="menu_enqueue">Enqueue</string>
+    <string name="menu_download">Download</string>
+    <string name="menu_invert_selection">Invert selection</string>
+    <string name="player_playlist_empty">Playlist empty</string>
+    <string name="no_results">No entries to display</string>
+    <string name="fetching_data">Retrieving data</string>
+
 </resources>

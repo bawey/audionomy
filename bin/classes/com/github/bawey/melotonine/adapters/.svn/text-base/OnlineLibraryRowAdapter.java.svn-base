@@ -1,0 +1,1009 @@
+package com.example.baweyplayer.adapters;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.regex.Pattern;
+
+import org.json.JSONException;
+import org.musicbrainz.android.api.data.ArtistSearchResult;
+import org.musicbrainz.android.api.data.RecordingInfo;
+import org.musicbrainz.android.api.data.Release;
+import org.musicbrainz.android.api.data.ReleaseGroupInfo;
+import org.musicbrainz.android.api.data.Track;
+
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.util.Log;
+import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.example.baweyplayer.Melotonine;
+import com.example.baweyplayer.R;
+import com.example.baweyplayer.activities.ArtistActivity;
+import com.example.baweyplayer.activities.LibraryActivity;
+import com.example.baweyplayer.activities.ReleaseActivity;
+import com.example.baweyplayer.activities.abstracts.AbstractFullscreenActivity;
+import com.example.baweyplayer.activities.abstracts.AbstractLibraryActivity;
+import com.example.baweyplayer.adapters.abstracts.AbstractLibraryRowAdapter;
+import com.example.baweyplayer.db.DatabaseHelper;
+import com.example.baweyplayer.db.DbDownload;
+import com.example.baweyplayer.db.DbRecording;
+import com.example.baweyplayer.singletons.Constants;
+import com.example.baweyplayer.singletons.LocalContentManager;
+import com.example.baweyplayer.singletons.MusicMetaProvider;
+import com.example.baweyplayer.singletons.PlaybackQueue;
+import com.example.baweyplayer.singletons.Settings;
+import com.example.baweyplayer.singletons.VkApi;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.perm.kate.api.Audio;
+import com.perm.kate.api.KException;
+
+import de.umass.lastfm.Album;
+import de.umass.lastfm.Artist;
+import de.umass.lastfm.ImageSize;
+
+public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
+	private static Semaphore coverMutex = new Semaphore(1);
+	private static Semaphore musicMutex = new Semaphore(1);
+	private static Thread currentCoverThread;
+	private static Thread currentMusicThread;
+	private boolean isStillValid = true;
+	String currentQuery;
+
+	private Release release;
+
+	private Context context;
+	private int rowMode = ROW_MODE_ARTIST;
+
+	private List<ArtistSearchResult> artists;
+	private List<ReleaseGroupInfo> releases;
+	private List<RecordingInfo> recordings;
+	private List<Track> tracks;
+	private List<List<MatchBox>> vkMatches;
+
+	private DatabaseHelper dbHelper = DatabaseHelper.getInstance();
+	private List<Drawable> imageIcons;
+	private float albumsToTracksRatio = 0.1f;
+
+	public List<List<MatchBox>> getVkMatches() {
+		return vkMatches;
+	}
+
+	public Release getRelease() {
+		return release;
+	}
+
+	public List<Track> getTracks() {
+		return tracks;
+	}
+
+	private synchronized List<MatchBox> getMatchBoxes(int position) {
+		if (vkMatches != null && vkMatches.size() > position && vkMatches.get(position) != null && vkMatches.get(position).size() > 0) {
+			return vkMatches.get(position);
+		}
+		return null;
+	}
+
+	public List<Drawable> getImageIcons() {
+		return imageIcons;
+	}
+
+	public void setImageIcons(List<Drawable> imageIcons) {
+		this.imageIcons = imageIcons;
+	}
+
+	public OnlineLibraryRowAdapter(Context context, int rowMode) {
+		this.rowMode = rowMode;
+		this.context = context;
+		this.dbHelper = OpenHelperManager.getHelper(context, DatabaseHelper.class);
+		try {
+			Log.d("database", dbHelper.getDao(DbRecording.class).countOf() + " objects");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public OnlineLibraryRowAdapter(Context context, int rowMode, String query) throws IOException {
+		this(context, rowMode);
+		this.context = context;
+		this.currentQuery = query;
+		MusicMetaProvider mmp = MusicMetaProvider.getInstance();
+		imageIcons = new LinkedList<Drawable>();
+		List<? extends Object> otherList = null;
+		switch (rowMode) {
+		case ROW_MODE_ARTIST:
+			artists = mmp.searchArtist(query);
+			otherList = artists;
+			break;
+		case ROW_MODE_ALBUM:
+			releases = mmp.searchReleaseGroup(query);
+			otherList = releases;
+			break;
+		case ROW_MODE_SONG:
+			if (context instanceof ReleaseActivity) {
+				Log.d("Essential", "creating adapter for a release view");
+				release = mmp.lookupRelease(query);
+				tracks = release.getTrackList();
+				otherList = tracks;
+			} else {
+				recordings = mmp.searchRecording(query);
+				groupRecordings();
+				otherList = recordings;
+				// TODO: done in other thread too... :(
+				Set<String> rgids = new HashSet<String>();
+				for (RecordingInfo rInfo : this.recordings) {
+					rgids.add(rInfo.getReleaseGroupMbid());
+				}
+				albumsToTracksRatio = rgids.size() / (float) recordings.size();
+			}
+			break;
+		}
+		for (Object o : otherList) {
+			imageIcons.add(null);
+		}
+		if (rowMode == ROW_MODE_SONG) {
+			Thread vkExplorer = new Thread(adapterbackgroundVkTask);
+			vkExplorer.setName(vkExplorer.getName() + "(VK)");
+			vkExplorer.start();
+		}
+		if (release == null) {
+			Thread mbExplorer = new Thread(adapterBackgroundTask);
+			mbExplorer.setName(mbExplorer.getName() + "(MB)");
+			mbExplorer.start();
+		}
+	}
+
+	public List<ArtistSearchResult> getArtists() {
+		return artists;
+	}
+
+	@Override
+	public int getCount() {
+		if (artists == null && recordings == null && releases == null && tracks == null) {
+			return 0;
+		}
+		switch (this.rowMode) {
+		case ROW_MODE_ARTIST:
+			return artists.size();
+		case ROW_MODE_SONG:
+			return release != null ? tracks.size() : recordings.size();
+		case ROW_MODE_ALBUM:
+			return releases.size();
+		default:
+			return -1;
+		}
+	}
+
+	@Override
+	public Object getItem(int position) {
+		switch (this.rowMode) {
+		case ROW_MODE_ARTIST:
+			return artists.get(position);
+		case ROW_MODE_SONG:
+			return release != null ? tracks.get(position) : recordings.get(position);
+		case ROW_MODE_ALBUM:
+			return releases.get(position);
+		default:
+			return -1;
+		}
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	public List<RecordingInfo> getRecordings() {
+		return recordings;
+	}
+
+	public List<ReleaseGroupInfo> getReleases() {
+		return releases;
+	}
+
+	public int getRowMode() {
+		return rowMode;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		Log.d("Broadcast", "refreshing list");
+		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View rowView = inflater.inflate(R.layout.library_row_layout, parent, false);
+
+		ImageView imageView = (ImageView) rowView.findViewById(R.id.image);
+		TextView textView = (TextView) rowView.findViewById(R.id.text);
+		CheckBox checkbox = (CheckBox) rowView.findViewById(R.id.checkbox);
+		ImageView fetchIcon = (ImageView) rowView.findViewById(R.id.fetching_status);
+
+		imageView.setVisibility(View.VISIBLE);
+		fetchIcon.setVisibility(View.INVISIBLE);
+
+		if (imageIcons.get(position) != null) {
+			imageView.setImageDrawable(imageIcons.get(position));
+		}
+
+		StringBuilder textBuilder = new StringBuilder();
+		switch (this.rowMode) {
+		case ROW_MODE_SONG:
+			if (release != null) {
+				Track track = tracks.get(position);
+				textBuilder.append(String.format("%02d", track.getPosition()));
+				textBuilder.append(". ");
+				textBuilder.append(track.getTitle());
+				textBuilder.append(" (");
+				int seconds = (int) Math.round(track.getDuration() / 1000.0);
+				textBuilder.append(String.format("%02d", seconds / 60));
+				textBuilder.append(":");
+				textBuilder.append(String.format("%02d", seconds % 60));
+				textBuilder.append(")");
+			} else {
+				RecordingInfo song = recordings.get(position);
+				textBuilder.append(song.getArtist().getName());
+				textBuilder.append(": ");
+				textBuilder.append(song.getTitle());
+			}
+			String mbid = recordings != null ? recordings.get(position).getMbid() : tracks.get(position).getRecordingMbid();
+			DbDownload dbDownload = DatabaseHelper.getInstance().getDownloadByMbid(mbid);
+			if ((dbDownload == null || dbDownload.isFinihed()) && getMatchBoxes(position) != null) {
+				checkbox.setVisibility(View.VISIBLE);
+				checkbox.setChecked(checked.contains(position));
+				checkbox.setTag(position);
+				checkbox.setOnCheckedChangeListener(checkingListener);
+			} else {
+				checkbox.setVisibility(View.INVISIBLE);
+			}
+			if (dbDownload != null) {
+				if (dbDownload.isFinihed()) {
+					Resources r = context.getResources();
+					Drawable[] layers = new Drawable[2];
+					layers[1] = r.getDrawable(R.drawable.btn_check_buttonless_on);
+					layers[0] = release == null ? imageView.getDrawable() : layers[1];
+					LayerDrawable layerDrawable = new LayerDrawable(layers);
+					imageView.setImageDrawable(layerDrawable);
+				} else {
+					fetchIcon.setImageResource(android.R.drawable.ic_popup_sync);
+					fetchIcon.setVisibility(View.VISIBLE);
+				}
+			}
+			// TODO: correct
+			if (release != null && (dbDownload == null || !dbDownload.isFinihed())) {
+				imageView.setVisibility(View.INVISIBLE);
+			}
+			break;
+		case ROW_MODE_ARTIST:
+			ArtistSearchResult artist = artists.get(position);
+			textBuilder.append(artist.getName());
+			checkbox.setVisibility(View.INVISIBLE);
+			break;
+		case ROW_MODE_ALBUM:
+			ReleaseGroupInfo release = releases.get(position);
+			textBuilder.append(release.getTitle());
+			checkbox.setVisibility(View.INVISIBLE);
+			break;
+		}
+
+		textView.setText(textBuilder.toString());
+
+		rowView.setClickable(false);
+		return rowView;
+	}
+
+	public void setArtists(List<ArtistSearchResult> artists) {
+		this.artists = artists;
+	}
+
+	public void setRecordings(List<RecordingInfo> recordings) {
+		this.recordings = recordings;
+	}
+
+	public void setReleases(List<ReleaseGroupInfo> releases) {
+		this.releases = releases;
+	}
+
+	private void groupRecordings() {
+		Map<String, Integer> occurencies = new HashMap<String, Integer>();
+		for (RecordingInfo recording : recordings) {
+			if (recording.getReleaseGroupMbid() == null) {
+				continue;
+			}
+			if (!occurencies.containsKey(recording.getReleaseGroupMbid())) {
+				occurencies.put(recording.getReleaseGroupMbid(), 1);
+			} else {
+				occurencies.put(recording.getReleaseGroupMbid(), occurencies.get(recording.getReleaseGroupMbid()) + 1);
+			}
+		}
+		Collections.sort(recordings, new RecordingInfoComparator(occurencies));
+	}
+
+	private static class RecordingInfoComparator implements Comparator<RecordingInfo> {
+
+		private Map<String, Integer> mbidOccurencies;
+
+		public RecordingInfoComparator(Map<String, Integer> mbidOccurencies) {
+			super();
+			this.mbidOccurencies = mbidOccurencies;
+		}
+
+		@Override
+		public int compare(RecordingInfo lhs, RecordingInfo rhs) {
+			if (lhs.getReleaseGroupMbid() == null) {
+				if (rhs.getReleaseGroupMbid() == null) {
+					return 0;
+				} else {
+					return 1;
+				}
+			} else {
+				if (rhs.getReleaseGroupMbid() == null) {
+					return -1;
+				} else {
+					return (int) Math.signum(mbidOccurencies.get(rhs.getReleaseGroupMbid()) - mbidOccurencies.get(lhs.getReleaseGroupMbid()));
+				}
+			}
+		}
+
+	}
+
+	private Runnable adapterBackgroundTask = new Runnable() {
+		@Override
+		public void run() {
+			threadPrologue(OnlineLibraryRowAdapter.currentCoverThread, OnlineLibraryRowAdapter.coverMutex);
+			// recordingPositionsByRelGroupMbid
+			Map<String, Set<Integer>> listPositionsByRgid = new LinkedHashMap<String, Set<Integer>>();
+
+			// recordingPositionsByArtistMbid - only if without release group
+			Map<String, Set<Integer>> listPositionsByArtistMbid = new LinkedHashMap<String, Set<Integer>>();
+
+			// artist images by artist Mbid
+			Map<String, String> artistMbidToImageUrl = new HashMap<String, String>();
+
+			// album images by releaseGroupMbid
+			Map<String, String> albumMbidToImageUrl = new HashMap<String, String>();
+
+			if (getRecordings() != null) {
+				for (int position = 0; position < getRecordings().size(); ++position) {
+					if (Thread.currentThread().isInterrupted()) {
+						Log.d("Threads", "Forsaking an interrupted thread");
+						threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+						return;
+					}
+					RecordingInfo recInfo = getRecordings().get(position);
+					/** if it has a ReleaseGroup **/
+					if (recInfo.getReleaseGroupMbid() != null && recInfo.getReleaseGroupMbid().length() > 0) {
+						if (listPositionsByRgid.get(recInfo.getReleaseGroupMbid()) == null) {
+							listPositionsByRgid.put(recInfo.getReleaseGroupMbid(), new HashSet<Integer>());
+						}
+						listPositionsByRgid.get(recInfo.getReleaseGroupMbid()).add(position);
+						/** otherwisfsprie, if it has an artist **/
+					} else if (recInfo.getArtist() != null) {
+						if (listPositionsByArtistMbid.get(recInfo.getArtist().getMbid()) == null) {
+							listPositionsByArtistMbid.put(recInfo.getArtist().getMbid(), new HashSet<Integer>());
+						}
+						listPositionsByArtistMbid.get(recInfo.getArtist().getMbid()).add(position);
+					}
+				}
+
+				Log.i("statistics", "songs: " + getRecordings().size() + ", relGroups: " + listPositionsByRgid.size() + ", *artists: "
+						+ listPositionsByArtistMbid.size());
+
+			} else if (getArtists() != null && currentQuery != null && currentQuery.length() > 0) {
+
+				Collection<Artist> lastfmArtists = Artist.search(currentQuery, Constants.LASTFM_API_KEY);
+				for (Artist artist : lastfmArtists) {
+					for (ImageSize imageSize : ImageSize.values()) {
+						if (artist.getImageURL(imageSize) != null && artist.getImageURL(imageSize).length() > 0) {
+							artistMbidToImageUrl.put(artist.getMbid(), artist.getImageURL(imageSize));
+							break;
+						}
+					}
+				}
+
+				for (int position = 0; position < getArtists().size(); ++position) {
+					ArtistSearchResult artist = getArtists().get(position);
+					if (!listPositionsByArtistMbid.containsKey(artist.getMbid())) {
+						listPositionsByArtistMbid.put(artist.getMbid(), new HashSet<Integer>());
+					}
+					listPositionsByArtistMbid.get(artist.getMbid()).add(position);
+				}
+
+			} else if (getReleases() != null && currentQuery != null && currentQuery.length() > 0) {
+				Collection<Album> albums = Album.search(currentQuery, "", Constants.LASTFM_API_KEY);
+				for (Album album : albums) {
+					for (ImageSize imageSize : ImageSize.values()) {
+						if (album.getImageURL(imageSize) != null && album.getImageURL(imageSize).length() > 0) {
+							albumMbidToImageUrl.put(album.getMbid(), album.getImageURL(imageSize));
+							break;
+						}
+					}
+				}
+				for (int position = 0; position < getReleases().size(); ++position) {
+					ReleaseGroupInfo relGroup = getReleases().get(position);
+					if (!listPositionsByRgid.containsKey(relGroup.getMbid())) {
+						listPositionsByRgid.put(relGroup.getMbid(), new HashSet<Integer>());
+					}
+					listPositionsByRgid.get(relGroup.getMbid()).add(position);
+				}
+			}
+
+			{
+				for (String rgid : listPositionsByRgid.keySet()) {
+					if (Thread.currentThread().isInterrupted()) {
+						Log.d("Threads", "Forsaking an interrupted thread");
+						threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+						return;
+					}
+					try {
+						// if albums were sought
+						ReleaseGroupInfo rGroupInfo = null;
+						String imageUrl = null;
+						if (getReleases() != null) {
+							// whoa - a lot effort to pull a right
+							// releaseGroupInfo
+							rGroupInfo = getReleases().get(listPositionsByRgid.get(rgid).iterator().next());
+							for (String releaseMbid : rGroupInfo.getReleaseMbids()) {
+								if (albumMbidToImageUrl.keySet().contains(releaseMbid)) {
+									Log.d("Essential", "album cover art found lazily");
+									imageUrl = albumMbidToImageUrl.get(releaseMbid);
+								}
+							}
+						}
+						if (imageUrl == null) {
+							if (rGroupInfo == null) {
+								// TODO: bite in here
+								List<ReleaseGroupInfo> relGroupInfos = MusicMetaProvider.getInstance().searchReleaseGroup(rgid);
+								Log.d(LibraryActivity.class.getSimpleName(), "found " + relGroupInfos.size() + " release groups by id: " + rgid);
+								if (relGroupInfos.size() > 0) {
+									rGroupInfo = relGroupInfos.get(0);
+								}
+							}
+							if (rGroupInfo != null) {
+								// find albums on lastfm
+								Log.d(LibraryActivity.class.getSimpleName(),
+										"fetch album covers for " + rGroupInfo.getTitle() + " by " + rGroupInfo.getTitle());
+								Collection<Album> albums = Album.search(rGroupInfo.getTitle(), rGroupInfo.getArtists().get(0).getName(),
+										Constants.LASTFM_API_KEY);
+								for (Album album : albums) {
+									if (Thread.currentThread().isInterrupted()) {
+										Log.d("Threads", "Forsaking an interrupted thread");
+										threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+										return;
+									}
+									if (rGroupInfo.getReleaseMbids().contains(album.getMbid())) {
+										for (ImageSize imageSize : ImageSize.values()) {
+											String tempUrl = album.getImageURL(imageSize);
+											if (tempUrl != null && tempUrl.length() > 0) {
+												imageUrl = tempUrl;
+												Log.d("Essential", "Found some cover using more detailed search!");
+											}
+										}
+										break;
+									}
+								}
+							}
+						}
+						if (imageUrl != null) {
+							if (Thread.currentThread().isInterrupted()) {
+								Log.d("Threads", "Forsaking an interrupted thread");
+								threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+								return;
+							}
+							InputStream content = (InputStream) new URL(imageUrl).getContent();
+							Drawable d = Drawable.createFromStream(content, "src");
+							content.close();
+
+							for (Integer recPos : listPositionsByRgid.get(rgid)) {
+								OnlineLibraryRowAdapter.this.getImageIcons().set(recPos, d);
+							}
+
+							notifyUiOfChangedDataset(Thread.currentThread());
+						}
+					} catch (IOException e) {
+						Log.e(LibraryActivity.class.getSimpleName(), "Exception while pumping the covers!");
+						e.printStackTrace();
+					}
+				}
+				for (String artistMbid : listPositionsByArtistMbid.keySet()) {
+					if (Thread.currentThread().isInterrupted()) {
+						Log.d("Threads", "Forsaking an interrupted thread");
+						threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+						return;
+					}
+					String imageUrl = null;
+					if (artistMbidToImageUrl.containsKey(artistMbid)) {
+						imageUrl = artistMbidToImageUrl.get(artistMbid);
+						Log.d("Essential", "Found artist image in a lazy way");
+					}
+
+					if (imageUrl != null) {
+						InputStream content;
+						try {
+							content = (InputStream) new URL(imageUrl).getContent();
+							Drawable d = Drawable.createFromStream(content, "src");
+							for (int position : listPositionsByArtistMbid.get(artistMbid)) {
+								getImageIcons().set(position, d);
+							}
+							notifyUiOfChangedDataset(Thread.currentThread());
+						} catch (MalformedURLException e) {
+							Log.d("Essential", "Malformed URL exception happened");
+							e.printStackTrace();
+						} catch (IOException e) {
+							Log.d("Essential", "IO Exception happened");
+							e.printStackTrace();
+						}
+					}
+
+				}
+				threadEpilogue(OnlineLibraryRowAdapter.coverMutex);
+			}
+		}
+	};
+
+	private void threadPrologue(Thread threadHook, Semaphore semaphore) {
+		synchronized (OnlineLibraryRowAdapter.class) {
+			if (threadHook != null && threadHook.isAlive()) {
+				Log.d("Threads", Thread.currentThread().getName() + " interrupting previous worker");
+				threadHook.interrupt();
+			}
+			if (isStillValid) {
+				if (threadHook == OnlineLibraryRowAdapter.currentCoverThread) {
+					OnlineLibraryRowAdapter.currentCoverThread = Thread.currentThread();
+					Log.d("Threads", Thread.currentThread().getName() + " put on cover hook");
+				} else if (threadHook == OnlineLibraryRowAdapter.currentMusicThread) {
+					OnlineLibraryRowAdapter.currentMusicThread = Thread.currentThread();
+					Log.d("Threads", Thread.currentThread().getName() + " put on music hook");
+				}
+			} else {
+				Log.d("Threads", Thread.currentThread().getName() + " adapter no longer valid. interupting itself");
+				Thread.currentThread().interrupt();
+				return;
+			}
+		}
+
+		try {
+			Log.d("Threads", Thread.currentThread().getName() + " asking for the lock");
+			semaphore.acquire();
+			Log.d("Threads", Thread.currentThread().getName() + " acquired the lock");
+		} catch (InterruptedException e) {
+			Log.d("Threads", Thread.currentThread().getName() + " background runner interrupted exception");
+			e.printStackTrace();
+		}
+	}
+
+	private void threadEpilogue(Semaphore semaphore) {
+		Log.d("Threads", Thread.currentThread().getName() + " releasing the lock");
+		semaphore.release();
+		Log.d("Threads", Thread.currentThread().getName() + " released the lock");
+	}
+
+	public synchronized void cleanUp() {
+		if (currentCoverThread != null && currentCoverThread.isAlive()) {
+			currentCoverThread.interrupt();
+		}
+		if (currentMusicThread != null && currentMusicThread.isAlive()) {
+			currentMusicThread.interrupt();
+		}
+		isStillValid = false;
+	}
+
+	private OnItemClickListener listItemClickListener = new OnItemClickListener() {
+
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, final int i, long l) {
+			String text = null;
+			Intent intent = null;
+			final Resources r = context.getResources();
+
+			if (getRecordings() != null || getTracks() != null) {
+				final String artist = getRecordings() != null ? recordings.get(i).getArtist().getName() : release.getArtists().get(0).getName();
+				final String title = getRecordings() != null ? recordings.get(i).getTitle() : tracks.get(i).getTitle();
+				final String mbid = getRecordings() != null ? getRecordings().get(i).getMbid() : getTracks().get(i).getRecordingMbid();
+				final int duration = getRecordings() != null ? getRecordings().get(i).getLength() / 1000 : getTracks().get(i).getDuration() / 1000;
+				final String releaseTitle = getRecordings() != null ? recordings.get(i).getReleaseGroupTitle() : release.getTitle();
+
+				final List<MatchBox> vkMatches = getMatchBoxes(i);
+				final DbDownload dbDownload = DatabaseHelper.getInstance().getDownloadByMbid(mbid);
+				final List<String> options = new LinkedList<String>();
+				if (vkMatches != null) {
+					options.add(r.getString(R.string.playback_remote));
+					if (dbDownload != null) {
+						if (dbDownload.isFinihed()) {
+							options.add(r.getString(R.string.playback_local));
+						}
+						options.add(r.getString(R.string.refetch));
+					}
+				}
+
+				if (options.size() == 1) {
+					PlaybackQueue.getInstance().enqueue(vkMatches.get(0).audio.url, title, artist, duration, releaseTitle, null);
+				} else if (options.size() > 1) {
+					ContextThemeWrapper cw = new ContextThemeWrapper(context, R.style.AlertDialogTheme);
+					AlertDialog.Builder ab = new AlertDialog.Builder(cw);
+					ab.setTitle(r.getString(R.string.action_choose));
+
+					ab.setItems(options.toArray(new String[options.size()]), new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface d, int choice) {
+							if (options.get(choice).equals(r.getString(R.string.refetch))) {
+								if (recordings != null) {
+									LocalContentManager.getInstance().startDownload(vkMatches.get(0).audio.url, recordings.get(i));
+								}
+							} else {
+								if (options.get(choice).equals(r.getString(R.string.playback_local))) {
+									PlaybackQueue.getInstance().enqueue(dbDownload.getFilePath(), title, artist, duration, releaseTitle, null);
+								} else if (options.get(choice).equals(r.getString(R.string.playback_remote))) {
+									PlaybackQueue.getInstance().enqueue(vkMatches.get(0).audio.url, title, artist, duration, releaseTitle, null);
+								}
+							}
+						}
+					});
+					ab.show();
+				}
+
+			} else if (getArtists() != null) {
+				text = getArtists().get(i).getName();
+				intent = new Intent(context, ArtistActivity.class);
+				intent.putExtra(ArtistActivity.ARTIST_MBID, getArtists().get(i).getMbid());
+			} else if (getReleases() != null) {
+				text = getReleases().get(i).getTitle();
+				intent = new Intent(context, ReleaseActivity.class);
+				intent.putExtra(ReleaseActivity.RELEASE_GROUP_MBID, getReleases().get(i).getMbid());
+			}
+			if (intent != null) {
+				context.startActivity(intent);
+			}
+		}
+
+	};
+
+	@Override
+	public OnItemClickListener getListItemClickListener() {
+		return listItemClickListener;
+	}
+
+	@Override
+	public OnItemLongClickListener getListItemLongClickListener() {
+		return listItemLongClickListener;
+	}
+
+	private OnItemLongClickListener listItemLongClickListener = new OnItemLongClickListener() {
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+			ContextThemeWrapper cw = new ContextThemeWrapper(context, R.style.AlertDialogTheme);
+			AlertDialog.Builder ab = new AlertDialog.Builder(cw);
+			ab.setTitle("Pick a better source");
+			final List<String> options = new LinkedList<String>();
+			final int clickedSong = arg2;
+			for (MatchBox match : vkMatches.get(arg2)) {
+				options.add(vkAudioPrinter(match.audio));
+			}
+			ab.setItems(options.toArray(new String[options.size()]), new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface d, int choice) {
+					MatchBox match = vkMatches.get(clickedSong).get(choice);
+					vkMatches.get(clickedSong).remove(match);
+					vkMatches.get(clickedSong).add(0, match);
+				}
+			});
+			ab.show();
+			return false;
+		}
+	};
+
+	private Runnable adapterbackgroundVkTask = new Runnable() {
+		@Override
+		public void run() {
+			threadPrologue(OnlineLibraryRowAdapter.currentMusicThread, musicMutex);
+			VkApi vk = VkApi.getInstance();
+			try {
+				Map<Audio, MatchBox> bestMatches = new HashMap<Audio, MatchBox>();
+				String searchQuery = release == null ? currentQuery : release.getArtists().get(0).getName() + " " + release.getTitle();
+				List<Audio> queryResults = null;
+				vkMatches = new LinkedList<List<MatchBox>>();
+				int requestCounter = 0;
+				boolean needMoreMatches = true;
+				int resultsNo = Settings.getInstance().getSearchResultsLimit();
+
+				do {
+					needMoreMatches = false;
+					queryResults = null;
+					int attempts = 0;
+					while (queryResults == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+						try {
+							queryResults = vk.searchAudio(searchQuery, "1", "0", (long) resultsNo, (long) resultsNo * requestCounter++);
+						} catch (KException kex) {
+							++attempts;
+							Log.w("Threads", "Thread put to sleep due to KException. Attempt: " + attempts);
+						}
+						Thread.sleep(attempts * 300);
+					}
+					if (attempts > Settings.getInstance().getApiRequeriesLimit()) {
+						((AbstractFullscreenActivity) context).bridgeToUiThread(new Runnable() {
+							@Override
+							public void run() {
+								((AbstractFullscreenActivity) context).startLoginActivity();
+							}
+						}, Thread.currentThread());
+					}
+
+					if (release != null) {
+						for (int trackNo = 0; trackNo < tracks.size(); ++trackNo) {
+							int foundMatches = 0;
+							Track track = tracks.get(trackNo);
+							if (vkMatches.size() < tracks.size()) {
+								vkMatches.add(new LinkedList<MatchBox>());
+							} else if (!vkMatches.get(trackNo).isEmpty() && vkMatches.get(trackNo).get(0).score >= SUFFICIENT_SCORE) {
+								continue;
+							}
+							for (Audio audio : queryResults) {
+								int score = computeMatchScore(audio, track, release);
+								if (score > 0) {
+									if (doSomeWeightLifting(bestMatches, score, audio, trackNo)) {
+										++foundMatches;
+									}
+									if (score >= SUFFICIENT_SCORE) {
+										break;
+									}
+								}
+							}
+							if (vkMatches.get(trackNo).isEmpty() || vkMatches.get(trackNo).get(0).score < SUFFICIENT_SCORE) {
+								needMoreMatches = true;
+							}
+							if (foundMatches > 0) {
+								notifyUiOfChangedDataset(Thread.currentThread());
+							}
+							Log.v("Threads", Thread.currentThread().getName() + " found " + foundMatches + " matches for current song");
+						}
+					} else if (albumsToTracksRatio < VK_ALBUMS_TO_SONGS_VARIANCE) {
+						for (int recNo = 0; recNo < recordings.size(); ++recNo) {
+							int foundMatches = 0;
+							RecordingInfo rInfo = recordings.get(recNo);
+							if (vkMatches.size() < recordings.size()) {
+								vkMatches.add(new LinkedList<MatchBox>());
+							} else if (!vkMatches.get(recNo).isEmpty() && vkMatches.get(recNo).get(0).score >= SUFFICIENT_SCORE) {
+								continue;
+							}
+							for (Audio audio : queryResults) {
+								int score = computeMatchScore(audio, rInfo);
+								if (score > 0) {
+									if (doSomeWeightLifting(bestMatches, score, audio, recNo)) {
+										++foundMatches;
+									}
+									if (score >= SUFFICIENT_SCORE) {
+										break;
+									}
+								}
+							}
+							if (vkMatches.get(recNo).isEmpty() || vkMatches.get(recNo).get(0).score < SUFFICIENT_SCORE) {
+								needMoreMatches = true;
+							}
+							if (foundMatches > 0) {
+								notifyUiOfChangedDataset(Thread.currentThread());
+							}
+							Log.v("Threads", Thread.currentThread().getName() + " found " + foundMatches + " matches for current song");
+						}
+					}
+				} while (queryResults.size() == resultsNo && !Thread.currentThread().isInterrupted() && needMoreMatches);
+				if (release != null) {
+					for (int trackNo = 0; trackNo < tracks.size(); ++trackNo) {
+						if (getMatchBoxes(trackNo) == null || getMatchBoxes(trackNo).get(0).score < SUFFICIENT_SCORE) {
+							String artist = release.getArtists().get(0).getName();
+							String title = tracks.get(trackNo).getTitle();
+
+							List<Audio> audios = null;
+							int attempts = 0;
+							while (audios == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+								try {
+									audios = vk.searchAudio(artist + " " + title, "1", "0", 100l, 0l);
+								} catch (KException kex) {
+									++attempts;
+									Log.w("Threads", "Thread put to sleep due to KException. Attempt: " + attempts);
+								}
+								Thread.sleep(attempts * 300);
+							}
+							if (audios != null) {
+								for (Audio audio : audios) {
+									int score = computeMatchScore(audio, artist, null, title, tracks.get(trackNo).getDuration());
+									if (score > 0) {
+										doSomeWeightLifting(bestMatches, score, audio, trackNo);
+										if (score >= SUFFICIENT_SCORE) {
+											break;
+										}
+									}
+
+								}
+								notifyUiOfChangedDataset(Thread.currentThread());
+							}
+						}
+					}
+				} else {
+					for (int recNo = 0; recNo < recordings.size(); ++recNo) {
+						// if the group search wasn't used
+						if (vkMatches.size() < recordings.size()) {
+							vkMatches.add(new LinkedList<MatchBox>());
+						}
+						if (getMatchBoxes(recNo) == null || getMatchBoxes(recNo).get(0).score < SUFFICIENT_SCORE) {
+							List<Audio> audios = null;
+							int attempts = 0;
+							String artist = recordings.get(recNo).getArtist().getName();
+							String title = recordings.get(recNo).getTitle();
+							while (audios == null && attempts < Settings.getInstance().getApiRequeriesLimit()) {
+								try {
+									audios = vk.searchAudio(artist + " " + title, "1", "0", 100l, 0l);
+								} catch (KException kex) {
+									++attempts;
+									Log.w("Threads", "Thread put to sleep due to KException. Attempt: " + attempts);
+								}
+								Thread.sleep(attempts * 300);
+							}
+							if (audios != null) {
+								for (Audio audio : audios) {
+									int score = computeMatchScore(audio, artist, null, title, recordings.get(recNo).getLength());
+									if (score > 0) {
+										doSomeWeightLifting(bestMatches, score, audio, recNo);
+										if (score >= SUFFICIENT_SCORE) {
+											break;
+										}
+									}
+								}
+								notifyUiOfChangedDataset(Thread.currentThread());
+							}
+						}
+					}
+				}
+			} catch (InterruptedException e) {
+				Log.d("Threads", Thread.currentThread().getName() + " interrupted!");
+			} catch (IOException e) {
+				((AbstractLibraryActivity) context).reportProblem(context.getResources().getString(R.string.connection_error));
+			} catch (JSONException e) {
+				((AbstractLibraryActivity) context).reportProblem(context.getResources().getString(R.string.gibberish_data_error));
+			}
+			threadEpilogue(musicMutex);
+		}
+	};
+
+	private boolean doSomeWeightLifting(Map<Audio, MatchBox> bestMatches, int score, Audio audio, int trackNo) {
+		MatchBox bestMatch = bestMatches.get(audio);
+		if (bestMatch != null && bestMatch.score < score) {
+			bestMatch.bestMatchedList.remove(bestMatch);
+		} else if (bestMatch != null && bestMatch.score > score) {
+			return false;
+		}
+		int position;
+		for (position = 0; position < vkMatches.get(trackNo).size(); ++position) {
+			if (vkMatches.get(trackNo).get(position).score < score) {
+				break;
+			}
+		}
+		MatchBox matchBox = new MatchBox(audio, score, vkMatches.get(trackNo));
+		vkMatches.get(trackNo).add(position, matchBox);
+		bestMatches.put(audio, matchBox);
+		return true;
+	}
+
+	private void notifyUiOfChangedDataset(Thread caller) {
+		((AbstractFullscreenActivity) context).bridgeToUiThread(new Runnable() {
+			@Override
+			public void run() {
+				OnlineLibraryRowAdapter.this.notifyDataSetChanged();
+			}
+		}, caller);
+	}
+
+	private static int computeMatchScore(Audio audio, String artist, String albumTitle, String songTitle, int mseconds) {
+		String vkArtist = audio.artist.toLowerCase();
+		String vkTitle = audio.title.toLowerCase();
+		float score = 0;
+		// Settings.getInstance().dump(
+		// vkArtist + " - " + vkTitle + " (" + audio.duration + ") " + " VS. " +
+		// artist + " - " + songTitle + "(" + mseconds / 1000 + ")");
+		// score for duration
+		float diff = Math.round(100 * (Math.abs(mseconds - 1000 * audio.duration) / (float) mseconds));
+		score += (40 - (diff * diff) * 0.5f);
+		// examine artist similarity
+		if (artist != null && artist.length() > 0) {
+			String tokens[] = artist.split(" ");
+			for (String token : tokens) {
+				if (vkArtist.contains(token)) {
+					score += 10.0 * token.length() / (artist.length() - tokens.length + 1);
+					vkArtist = vkArtist.replaceFirst(Pattern.quote(token), "");
+				}
+			}
+		}
+		if (songTitle != null && songTitle.length() > 0) {
+			String[] tokens = songTitle.split(" ");
+			for (String token : tokens) {
+				if (vkTitle.contains(token)) {
+					score += 30.0 * token.length() / (songTitle.length() - tokens.length + 1);
+					vkTitle = vkTitle.replaceFirst(Pattern.quote(token), "");
+				}
+			}
+		}
+		// Log.d("audioSearch", "artist now: " + vkArtist + ", titleNow: " +
+		// vkTitle);
+		if (albumTitle != null && albumTitle.length() > 0) {
+			String[] tokens = albumTitle.split(" ");
+			for (String token : tokens) {
+				if (vkTitle.contains(token)) {
+					score += 20.0 * token.length() / (albumTitle.length() - tokens.length + 1);
+					vkTitle = vkTitle.replaceFirst(Pattern.quote(token), "");
+				} else if (vkArtist.contains(token)) {
+					score += 20.0 * token.length() / (albumTitle.length() - tokens.length + 1);
+					vkArtist = vkTitle.replaceFirst(Pattern.quote(token), "");
+				}
+			}
+		} else {
+			score *= 1.25;
+		}
+		Settings.getInstance().dump(" [" + score + "] \n");
+		return Math.round(score);
+	}
+
+	public static int computeMatchScore(Audio audio, Track track, Release release) {
+		return computeMatchScore(audio, release.getArtists().get(0).getName().toLowerCase(), release.getTitle().toLowerCase(), track.getTitle()
+				.toLowerCase(), track.getDuration());
+	}
+
+	// TODO: store data retrieved by cover-finder (album titles)
+	public static int computeMatchScore(Audio audio, RecordingInfo rInfo) {
+		return computeMatchScore(audio, rInfo.getArtist().getName().toLowerCase(), rInfo.getReleaseGroupMbid() == null ? null : rInfo
+				.getReleaseGroupTitle().toLowerCase(), rInfo.getTitle().toLowerCase(), rInfo.getLength());
+	}
+
+	public static class MatchBox {
+		public Audio audio;
+		public int score;
+		public List<MatchBox> bestMatchedList;
+
+		public MatchBox(Audio audio, int score, List<MatchBox> bestMatch) {
+			super();
+			this.audio = audio;
+			this.score = score;
+			this.bestMatchedList = bestMatch;
+		}
+	}
+
+	public static class SongFetchedReceiver extends BroadcastReceiver {
+
+		private OnlineLibraryRowAdapter adapter;
+
+		public SongFetchedReceiver(OnlineLibraryRowAdapter adapter) {
+			this.adapter = adapter;
+		}
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Melotonine.SONG_FETCHED_BROADCAST)) {
+				Log.d("Download", "GOT THE INTENT ABOUT SOME DOWNLOADED SONG");
+				adapter.notifyDataSetChanged();
+			}
+		}
+	}
+}

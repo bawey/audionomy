@@ -24,6 +24,7 @@ import com.github.bawey.melotonine.activities.MaintenanceActivity;
 import com.github.bawey.melotonine.activities.PlayerActivity;
 import com.github.bawey.melotonine.enums.AppMode;
 import com.github.bawey.melotonine.enums.NetMode;
+import com.github.bawey.melotonine.listeners.FullscreenActivities;
 import com.github.bawey.melotonine.listeners.GestureListener;
 import com.github.bawey.melotonine.receivers.AppModeChangeReceiver;
 import com.github.bawey.melotonine.singletons.Constants;
@@ -71,38 +72,14 @@ public abstract class AbstractFullscreenActivity extends AbstractMenuActivity {
 			getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.titlebar_layout);
 		}
 
-		// TODO: this is extremely ugly and dirty!
 		TextView activityTitle = (TextView) findViewById(R.id.activityTitle);
-		ImageView libImg = (ImageView) findViewById(R.id.imageBasket);
-		ImageView plrImg = (ImageView) findViewById(R.id.imagePlay);
-		ImageView stgImg = (ImageView) findViewById(R.id.imageSettings);
-		ImageView toBlur[] = null;
-
-		if (this instanceof LibraryActivity) {
-			activityTitle.setText(R.string.activity_media);
-			blurImageViews(new ImageView[] { plrImg, stgImg });
-		} else if (this instanceof PlayerActivity) {
-			activityTitle.setText(R.string.activity_player);
-			blurImageViews(new ImageView[] { libImg, stgImg });
-		} else if (this instanceof MaintenanceActivity) {
-			activityTitle.setText(R.string.activity_settings);
-			blurImageViews(new ImageView[] { libImg, plrImg });
-		} else {
-			activityTitle.setText("");
-			blurImageViews(new ImageView[] { libImg, plrImg, stgImg });
+		for (FullscreenActivities fa : FullscreenActivities.values()) {
+			if (fa.getDistinctiveClass().isAssignableFrom(this.getClass())) {
+				activityTitle.setText(fa.getTitleBarTextRscId());
+			} else {
+				((ImageView) findViewById(fa.getTitleBarIconViewId())).setAlpha(120);
+			}
 		}
-		// getWindow().getDecorView().setOnTouchListener(new OnTouchListener() {
-		//
-		// @Override
-		// public boolean onTouch(View v, MotionEvent event) {
-		// if (gestureDetector == null) {
-		// gestureDetector = new GestureDetector(new
-		// GestureListener(AbstractFullscreenActivity.this));
-		// }
-		// gestureDetector.onTouchEvent(event);
-		// return false;
-		// }
-		// });
 	}
 
 	@Override
@@ -113,12 +90,6 @@ public abstract class AbstractFullscreenActivity extends AbstractMenuActivity {
 		}
 		gestureDetector.onTouchEvent(event);
 		return false;
-	}
-
-	private void blurImageViews(ImageView[] views) {
-		for (ImageView img : views) {
-			img.setAlpha(127);
-		}
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -18,7 +20,6 @@ import com.github.bawey.melotonine.singletons.PlaybackQueue;
 
 public class LibraryActivity extends AbstractLibraryActivity {
 
-	private PlaybackQueue queue = PlaybackQueue.getInstance();
 	private ListView libraryList;
 	private TextView rowsFilter;
 	private String currentQuery = "";
@@ -70,15 +71,6 @@ public class LibraryActivity extends AbstractLibraryActivity {
 
 	public void onCategorySwitched(View view) {
 		this.rowMode = view.getId();
-		switch (view.getId()) {
-		case OnlineLibraryRowAdapter.ROW_MODE_SONG:
-			findViewById(R.id.button_enqueue).setVisibility(View.VISIBLE);
-			findViewById(R.id.button_fetch).setVisibility(View.VISIBLE);
-			break;
-		default:
-			findViewById(R.id.button_enqueue).setVisibility(View.GONE);
-			findViewById(R.id.button_fetch).setVisibility(View.GONE);
-		}
 		revalidateList();
 	}
 

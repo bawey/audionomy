@@ -1,0 +1,59 @@
+package com.example.baweyplayer.adapters.abstracts;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+
+import com.example.baweyplayer.R;
+import com.example.baweyplayer.internals.Song;
+import com.perm.kate.api.Audio;
+
+public abstract class AbstractLibraryRowAdapter extends BaseAdapter {
+	public static final int ROW_MODE_ALBUM = R.id.showAlbums;
+	public static final int ROW_MODE_ARTIST = R.id.showArtists;
+	public static final int ROW_MODE_SONG = R.id.showSongs;
+
+	protected static final int SUFFICIENT_SCORE = 95;
+	protected static final float VK_ALBUMS_TO_SONGS_VARIANCE = 0.1f;
+
+	protected Set<Integer> checked = new HashSet<Integer>();
+
+	protected OnCheckedChangeListener checkingListener = new OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			if (isChecked) {
+				checked.add((Integer) buttonView.getTag());
+			} else {
+				checked.remove((Integer) buttonView.getTag());
+			}
+		}
+	};
+
+	public static String vkAudioPrinter(Audio audio) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(audio.artist).append(": ").append(audio.title).append(" (").append(String.format("%02d", audio.duration / 60)).append(":")
+				.append(String.format("%02d", audio.duration % 60)).append(")");
+		return sb.toString();
+	}
+
+	public static String songPrinter(Song song) {
+		return new StringBuilder().append(song.getArtist()).append(" - ").append(song.getTitle()).
+		append(" (").append(String.format("%02d", song.getDuration() / 60)).append(":").append(String.format("%02d", song.getDuration() % 60))
+				.append(")").toString();
+	}
+
+	abstract public void cleanUp();
+
+	public Set<Integer> getChecked() {
+		return checked;
+	}
+
+	abstract public OnItemClickListener getListItemClickListener();
+
+	abstract public OnItemLongClickListener getListItemLongClickListener();
+}

@@ -108,12 +108,8 @@ public class ArtistActivity extends AbstractLibraryActivity {
 			public void onCheckedChanged(RadioGroup group, int checkedId) {
 				if (checkedId == R.id.radio_recordings) {
 					ArtistActivity.this.rowMode = OnlineLibraryRowAdapter.ROW_MODE_SONG;
-					findViewById(R.id.button_enqueue).setVisibility(View.VISIBLE);
-					findViewById(R.id.button_fetch).setVisibility(View.VISIBLE);
 				} else {
 					ArtistActivity.this.rowMode = OnlineLibraryRowAdapter.ROW_MODE_ALBUM;
-					findViewById(R.id.button_enqueue).setVisibility(View.GONE);
-					findViewById(R.id.button_fetch).setVisibility(View.GONE);
 				}
 				revalidateList();
 			}
@@ -124,6 +120,5 @@ public class ArtistActivity extends AbstractLibraryActivity {
 	public int getLayoutId() {
 		return R.layout.artist_layout;
 	}
-	
-	
+
 }
