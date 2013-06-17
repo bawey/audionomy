@@ -215,7 +215,9 @@ public abstract class AbstractLibraryActivity extends AbstractFullscreenActivity
 					menu.add(0, MENU_DELETE, 0, getResources().getString(R.string.delete));
 				}
 			}
-			menu.add(0, MENU_INVERSE_SELECTION, 0, getResources().getString(R.string.menu_invert_selection));
+			// TODO sorry, another time perhaps
+			// menu.add(0, MENU_INVERSE_SELECTION, 0,
+			// getResources().getString(R.string.menu_invert_selection));
 		}
 		return result;
 	}

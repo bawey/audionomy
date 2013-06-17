@@ -73,16 +73,6 @@
         android:orientation="horizontal" >
 
         <ImageButton
-            android:id="@+id/button5"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/butt_purge_list"
-            android:onClick="clearPlaylist"
-            android:src="@drawable/ic_menu_delete" />
-
-        <ImageButton
             android:id="@+id/button1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -131,16 +121,6 @@
             android:contentDescription="@string/butt_stop"
             android:onClick="stopAudio"
             android:src="@drawable/ic_media_stop" />
-
-        <ImageButton
-            android:id="@+id/button7"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.14"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/playback_mode"
-            android:onClick="switchPlaybackMode"
-            android:src="@drawable/ic_menu_forward" />
     </LinearLayout>
 
     <!--

@@ -18,6 +18,18 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
+	/**
+	 * FUTURE QUERIES:
+	 * 
+	 * select * from dbrelease where groupMbid in (select distinct release from
+	 * dbrecording where dbrecording.mbid in(select recording_mbid from
+	 * dbdownload where isFinihed=1))
+	 * 
+	 * select * from dbartist where mbid in (select distinct artist from
+	 * dbrecording where dbrecording.mbid in(select recording_mbid from
+	 * dbdownload where isFinihed=1)) just to express in this ormLite
+	 * 
+	 */
 
 	/** **/
 	public static final String DATABASE_NAME = "baweyPlayer.db";
@@ -173,7 +185,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 	}
 
 	public List<DbArtist> getArtistsByAnyFiedl(String query) {
-		//String[] tokens = query.split(" ");
+		// String[] tokens = query.split(" ");
 		return null;
 	}
 

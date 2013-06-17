@@ -1,7 +1,13 @@
 package com.github.bawey.melotonine.activities;
 
+import java.util.LinkedList;
 import java.util.List;
 
+import org.musicbrainz.android.api.data.RecordingInfo;
+import org.musicbrainz.android.api.data.Track;
+
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -9,27 +15,44 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.github.bawey.melotonine.Melotonine;
 import com.github.bawey.melotonine.R;
 import com.github.bawey.melotonine.activities.abstracts.AbstractFullscreenActivity;
+import com.github.bawey.melotonine.activities.abstracts.AbstractLibraryActivity;
+import com.github.bawey.melotonine.adapters.OfflineLibraryRowAdapter;
+import com.github.bawey.melotonine.adapters.OnlineLibraryRowAdapter;
 import com.github.bawey.melotonine.adapters.PlaylistRowAdapter;
+import com.github.bawey.melotonine.adapters.OnlineLibraryRowAdapter.MatchBox;
+import com.github.bawey.melotonine.adapters.abstracts.AbstractLibraryRowAdapter;
+import com.github.bawey.melotonine.db.DbRecording;
+import com.github.bawey.melotonine.enums.AppMode;
 import com.github.bawey.melotonine.internals.Song;
 import com.github.bawey.melotonine.listeners.OnPlaybackEndListener;
 import com.github.bawey.melotonine.runnables.ProgressBarUpdater;
+import com.github.bawey.melotonine.singletons.LocalContentManager;
 import com.github.bawey.melotonine.singletons.PlaybackQueue;
 
 public class PlayerActivity extends AbstractFullscreenActivity {
+	public static final int MENU_PLAYBACK_DEFAULT = 201;
+	public static final int MENU_PLAYBACK_LOOP_ALL = 202;
+	public static final int MENU_PLAYBACK_LOOP_ONE = 203;
+	public static final int MENU_CLEAR_PLAYLIST = 204;
 
 	public static enum PlaybackMode {
 		DEFAULT(0, R.drawable.ic_menu_forward),
 		REPEAT_ALL(1, R.drawable.ic_menu_revert),
 		REPEAT_ONE(2, R.drawable.ic_menu_refresh);
+
 		public static PlaybackMode getNext(PlaybackMode current) {
 			int nextId = (current.getId() + 1) % PlaybackMode.values().length;
 			for (PlaybackMode mode : PlaybackMode.values()) {
@@ -154,7 +177,6 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 		progressBarUpdater = new ProgressBarUpdater(this);
 		progressBarUpdater.run();
 		// super
-		((ImageButton) findViewById(R.id.button7)).setImageResource(playbackMode.getImageId());
 		playlistAdapter = new PlaylistRowAdapter(this);
 		(playlistView = (ListView) findViewById(R.id.playlist_view)).setAdapter(playlistAdapter);
 		playlistView.setOnItemClickListener(playlistAdapter.getOnItemClickListener());
@@ -209,12 +231,6 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 		mp.reset();
 	}
 
-	public void switchPlaybackMode(View view) {
-		ImageButton button = (ImageButton) view;
-		playbackMode = PlaybackMode.getNext(playbackMode);
-		button.setImageResource(playbackMode.getImageId());
-	}
-
 	public void updatePlaylistView(final List<Song> songs, final int currentPosition) {
 		runOnUiThread(new Runnable() {
 			@Override
@@ -256,4 +272,42 @@ public class PlayerActivity extends AbstractFullscreenActivity {
 		return R.layout.player_layout;
 	}
 
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		boolean result = super.onPrepareOptionsMenu(menu);
+		menu.add(0, MENU_PLAYBACK_DEFAULT, 0, getResources().getString(R.string.mode_default)
+				+ (playbackMode.equals(PlaybackMode.DEFAULT) ? " (" + getResources().getString(R.string.active) + ")" : ""));
+		menu.add(0, MENU_PLAYBACK_LOOP_ALL, 0,
+				getResources().getString(R.string.mode_repeat_all)
+						+ (playbackMode.equals(PlaybackMode.REPEAT_ALL) ? " (" + getResources().getString(R.string.active) + ")" : ""));
+		menu.add(0, MENU_PLAYBACK_LOOP_ONE, 0,
+				getResources().getString(R.string.mode_repeat_one)
+						+ (playbackMode.equals(PlaybackMode.REPEAT_ONE) ? " (" + getResources().getString(R.string.active) + ")" : ""));
+		menu.add(0, MENU_CLEAR_PLAYLIST, 0, getResources().getString(R.string.clear_playlist));
+		return result;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (super.onOptionsItemSelected(item)) {
+			return true;
+		}
+		switch (item.getItemId()) {
+		case MENU_CLEAR_PLAYLIST:
+			clearPlaylist(null);
+			stopAudio(null);
+			return true;
+		case MENU_PLAYBACK_DEFAULT:
+			playbackMode = PlaybackMode.DEFAULT;
+			return true;
+		case MENU_PLAYBACK_LOOP_ALL:
+			playbackMode = PlaybackMode.REPEAT_ALL;
+			return true;
+		case MENU_PLAYBACK_LOOP_ONE:
+			playbackMode = PlaybackMode.REPEAT_ONE;
+			return true;
+		default:
+			return false;
+		}
+	}
 }

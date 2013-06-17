@@ -41,16 +41,19 @@ public class GestureListener extends SimpleOnGestureListener {
 		Log.d("Swiper", "Vx: " + velocityX + ", Vy:" + velocityY + ", Xdist" + (e1.getX() - e2.getX()));
 		if (e1.getX() - e2.getX() > minDistance && Math.abs(velocityX) > thresholdVelocity) {
 			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getNext().getLaunchableClass());
+			Log.d("Bizarre", "will start: "
+					+ FullscreenActivities.getByClass(parentActivity.getClass()).getNext().getLaunchableClass().getSimpleName());
 			parentActivity.startActivity(i);
 			return false; // Right to left
 		} else if (e2.getX() - e1.getX() > minDistance && Math.abs(velocityX) > thresholdVelocity) {
 			i = new Intent(parentActivity, FullscreenActivities.getByClass(parentActivity.getClass()).getPrev().getLaunchableClass());
+			Log.d("Bizarre", "will start: "
+					+ FullscreenActivities.getByClass(parentActivity.getClass()).getPrev().getLaunchableClass().getSimpleName());
 			parentActivity.startActivity(i);
 			return false; // Left to right
 		}
 
 		if (e1.getY() - e2.getY() > minDistance && Math.abs(velocityY) > thresholdVelocity) {
-			parentActivity.reportProblem("TOP");
 			return false; // Bottom to top
 		} else if (e2.getY() - e1.getY() > minDistance && Math.abs(velocityY) > thresholdVelocity) {
 			return false; // Top to bottom

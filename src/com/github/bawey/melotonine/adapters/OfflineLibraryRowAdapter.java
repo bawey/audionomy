@@ -1,5 +1,6 @@
 package com.github.bawey.melotonine.adapters;
 
+import java.util.Iterator;
 import java.util.List;
 
 import android.app.AlertDialog;
@@ -55,7 +56,6 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 	}
 
 	private AbstractLibraryActivity libraryActivity;
-	
 
 	public OfflineLibraryRowAdapter(AbstractLibraryActivity libraryActivity, int rowMode, String query) {
 		this.libraryActivity = libraryActivity;
@@ -67,9 +67,33 @@ public class OfflineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 			} else {
 				releases = dbHelper.getReleasesByArtistMbid(libraryActivity.getArtistMbid());
 			}
+			// UGLY!
+			List<DbRecording> downRecordings = dbHelper.getDownloadedRecordings();
+			lookup: for (Iterator<DbRelease> i = releases.iterator(); i.hasNext();) {
+				DbRelease rel = i.next();
+				for (DbRecording rec : downRecordings) {
+					if (rec.getRelease() != null && rec.getRelease().getGroupMbid().equals(rel.getGroupMbid())) {
+						continue lookup;
+					}
+				}
+				i.remove();
+			}
 			break;
 		case ROW_MODE_ARTIST:
 			artists = dbHelper.getArtistRed().queryForAll();
+
+			// UGLY!
+			downRecordings = dbHelper.getDownloadedRecordings();
+			lookup: for (Iterator<DbArtist> i = artists.iterator(); i.hasNext();) {
+				DbArtist art = i.next();
+				for (DbRecording rec : downRecordings) {
+					if (rec.getArtist() != null && rec.getArtist().getMbid().equals(art.getMbid())) {
+						continue lookup;
+					}
+				}
+				i.remove();
+			}
+
 			break;
 		case ROW_MODE_SONG:
 		default:

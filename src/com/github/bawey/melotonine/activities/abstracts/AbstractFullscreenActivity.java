@@ -113,6 +113,7 @@ public abstract class AbstractFullscreenActivity extends AbstractMenuActivity {
 				startLoginActivity();
 			}
 		}
+		Log.d("Bizarre", this.getClass().getSimpleName() + " starting");
 	}
 
 	@Override

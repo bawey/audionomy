@@ -93,6 +93,9 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 	private List<Drawable> imageIcons;
 	private float albumsToTracksRatio = 0.1f;
 
+	/** temp drawable **/
+	private static Drawable d = null;
+	
 	public List<List<MatchBox>> getVkMatches() {
 		return vkMatches;
 	}
@@ -527,7 +530,7 @@ public class OnlineLibraryRowAdapter extends AbstractLibraryRowAdapter {
 								return;
 							}
 							InputStream content = (InputStream) new URL(imageUrl).getContent();
-							Drawable d = Drawable.createFromStream(content, "src");
+							d = Drawable.createFromStream(content, "src");
 							content.close();
 
 							for (Integer recPos : listPositionsByRgid.get(rgid)) {

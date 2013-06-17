@@ -8,6 +8,7 @@
     <string name="butt_prev">previous</string>
     <string name="butt_stop">stop</string>
     <string name="butt_purge_list">Clear playlist</string>
+    <string name="active">active</string>
     <string name="mode_default">One by one</string>
     <string name="mode_repeat_one">Repeat one</string>
     <string name="mode_repeat_all">Repeat all</string>
@@ -26,7 +27,7 @@
     <string name="refetch">refetch</string>
     <string name="enqueue">enqueue</string>
     <string name="fetch">fetch</string>
-    <string name="delete">dump</string>
+    <string name="delete">Delete</string>
     <string name="toast_deleted">Selected song(s) have been removed</string>
     <string name="delete_title">Deleting tracks</string>
     <string name="delete_confirm">Delete tracks?</string>
@@ -57,5 +58,6 @@
     <string name="player_playlist_empty">Playlist empty</string>
     <string name="no_results">No entries to display</string>
     <string name="fetching_data">Retrieving data</string>
+    <string name="clear_playlist">Clear playlist</string>
 
 </resources>
